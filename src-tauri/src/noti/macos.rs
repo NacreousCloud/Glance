@@ -95,16 +95,22 @@ extern "C" fn observer_callback(
     unsafe {
         let ctx = &mut *(refcon as *mut ObserverContext);
         let noti_str = CFString::wrap_under_get_rule(notification).to_string();
+        tracing::debug!(notification = %noti_str, "AXObserver callback received");
 
         if noti_str == "AXCreated" || noti_str == "AXTitleChanged" {
             let mut titles = Vec::new();
             descend(element, &mut titles, 0);
+
+            if titles.is_empty() {
+                tracing::trace!("No titles found in elements");
+            }
 
             for t in titles {
                 if CHROME_TITLES.iter().any(|c| *c == t) {
                     continue;
                 }
                 if !ctx.seen_set.contains(&t) {
+                    tracing::info!(title = %t, "New notification detected on macOS");
                     if ctx.seen_order.len() >= SEEN_CAPACITY {
                         if let Some(old) = ctx.seen_order.pop_front() {
                             ctx.seen_set.remove(&old);
@@ -130,7 +136,11 @@ impl NotificationSource for MacosNotiSource {
             anyhow::bail!("Accessibility permission not granted");
         }
 
-        let pid = Self::find_nc_pid().ok_or_else(|| anyhow::anyhow!("Notification Center not found"))?;
+        let pid = Self::find_nc_pid().ok_or_else(|| {
+            tracing::error!("Could not find Notification Center process (com.apple.notificationcenterui)");
+            anyhow::anyhow!("Notification Center not found")
+        })?;
+        tracing::info!(pid, "Found Notification Center process");
 
         *self.running.lock() = true;
         let running = self.running.clone();
@@ -140,8 +150,10 @@ impl NotificationSource for MacosNotiSource {
             let mut observer = std::ptr::null_mut();
             let err = AXObserverCreate(pid, observer_callback, &mut observer);
             if err != kAXErrorSuccess {
+                tracing::error!(error = err, "Failed to create AXObserver");
                 return;
             }
+            tracing::info!("AXObserver created successfully");
 
             let ctx = Box::into_raw(Box::new(ObserverContext {
                 publish,
@@ -150,11 +162,24 @@ impl NotificationSource for MacosNotiSource {
             }));
 
             let app_ref = AXUIElementCreateApplication(pid);
-            let noti = CFString::new(kAXCreatedNotification);
-            AXObserverAddNotification(observer, app_ref, noti.as_concrete_TypeRef() as _, ctx as _);
+            
+            // Observe AXCreated
+            let noti_created = CFString::new(kAXCreatedNotification);
+            let err = AXObserverAddNotification(observer, app_ref, noti_created.as_concrete_TypeRef() as _, ctx as _);
+            if err != kAXErrorSuccess {
+                tracing::warn!(error = err, "Failed to add AXCreated notification observer");
+            }
+
+            // Observe AXTitleChanged
+            let noti_title = CFString::new(accessibility_sys::kAXTitleChangedNotification);
+            let err = AXObserverAddNotification(observer, app_ref, noti_title.as_concrete_TypeRef() as _, ctx as _);
+            if err != kAXErrorSuccess {
+                tracing::warn!(error = err, "Failed to add AXTitleChanged notification observer");
+            }
 
             let source = AXObserverGetRunLoopSource(observer);
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
+            tracing::info!("AXObserver added to RunLoop");
 
             while *running.lock() {
                 core_foundation::runloop::CFRunLoopRunInMode(
@@ -164,6 +189,7 @@ impl NotificationSource for MacosNotiSource {
                 );
             }
 
+            tracing::info!("Stopping macOS notification observer");
             CFRelease(app_ref as _);
             CFRelease(observer as _);
             let _ = Box::from_raw(ctx);
