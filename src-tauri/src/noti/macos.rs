@@ -2,7 +2,8 @@
 
 use super::{NotiEvent, NotificationSource, Publisher};
 use accessibility_sys::{
-    kAXChildrenAttribute, kAXErrorSuccess, kAXTitleAttribute, AXIsProcessTrustedWithOptions,
+    kAXChildrenAttribute, kAXDescriptionAttribute, kAXErrorSuccess, kAXHelpAttribute,
+    kAXRoleAttribute, kAXTitleAttribute, kAXValueAttribute, AXIsProcessTrustedWithOptions,
     AXUIElementCopyAttributeValue, AXUIElementCreateApplication, AXUIElementRef,
 };
 use core_foundation::array::{CFArray, CFArrayRef};
@@ -162,22 +163,54 @@ unsafe fn read_nc_titles(pid: i32) -> Option<Vec<String>> {
     Some(out)
 }
 
+// Read attributes that may carry notification text. Banners typically use
+// AXDescription or AXValue, NOT AXTitle.
+const TEXT_ATTRS: &[&str] = &[
+    kAXTitleAttribute,
+    kAXDescriptionAttribute,
+    kAXValueAttribute,
+    kAXHelpAttribute,
+];
+
+unsafe fn read_string_attr(elem: AXUIElementRef, attr: &str) -> Option<String> {
+    let cf_attr = CFString::new(attr);
+    let mut value: CFTypeRef = std::ptr::null();
+    let err = AXUIElementCopyAttributeValue(
+        elem,
+        cf_attr.as_concrete_TypeRef() as CFStringRef,
+        &mut value,
+    );
+    if err != kAXErrorSuccess || value.is_null() {
+        return None;
+    }
+    // Try as CFString; if not a string, drop the ref.
+    let cf_type = core_foundation::base::CFType::wrap_under_create_rule(value);
+    cf_type
+        .downcast::<CFString>()
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+}
+
 unsafe fn descend(elem: AXUIElementRef, out: &mut Vec<String>, depth: usize) {
     if elem.is_null() || depth > MAX_DEPTH {
         return;
     }
 
-    let title_attr = CFString::new(kAXTitleAttribute);
-    let mut title_value: CFTypeRef = std::ptr::null();
-    let err = AXUIElementCopyAttributeValue(
-        elem,
-        title_attr.as_concrete_TypeRef() as CFStringRef,
-        &mut title_value,
-    );
-    if err == kAXErrorSuccess && !title_value.is_null() {
-        let s = CFString::wrap_under_create_rule(title_value as CFStringRef);
-        let text = s.to_string();
-        if !text.is_empty() {
+    // Diagnostic at root: log role + texts to help locate banner element.
+    let log_diag = depth <= 2 && tracing::enabled!(tracing::Level::TRACE);
+    if log_diag {
+        let role = read_string_attr(elem, kAXRoleAttribute).unwrap_or_default();
+        let texts: Vec<String> = TEXT_ATTRS
+            .iter()
+            .filter_map(|a| read_string_attr(elem, a).map(|s| format!("{}={}", a, s)))
+            .collect();
+        if !texts.is_empty() {
+            tracing::trace!(depth, role = %role, attrs = ?texts, "AX element");
+        }
+    }
+
+    for attr in TEXT_ATTRS {
+        if let Some(text) = read_string_attr(elem, attr) {
             out.push(text);
         }
     }
