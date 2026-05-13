@@ -45,38 +45,35 @@ impl NotificationSource for WindowsNotiSource {
 
         let publish: Arc<Publisher> = Arc::new(publish);
         let publish_handler = publish.clone();
-        let handler = TypedEventHandler::<
-            UserNotificationListener,
-            UserNotificationChangedEventArgs,
-        >::new(move |_sender, args| {
-            let Some(args) = args.as_ref() else {
-                return Ok(());
-            };
-            let id = args.UserNotificationId()?;
-            let listener = UserNotificationListener::Current()?;
-            let notif = listener.GetNotification(id)?;
-            let app_info = notif.AppInfo()?;
-            let app_id = app_info.AppUserModelId()?.to_string_lossy();
-            let app_name = app_info
-                .DisplayInfo()?
-                .DisplayName()?
-                .to_string_lossy();
-            let binding = notif
-                .Notification()?
-                .Visual()?
-                .GetBinding(&KnownNotificationBindings::ToastGeneric()?)?;
-            let texts = binding.GetTextElements()?;
-            let mut title = String::new();
-            let mut body = String::new();
-            if let Ok(t) = texts.GetAt(0) {
-                title = t.Text()?.to_string_lossy();
-            }
-            if let Ok(b) = texts.GetAt(1) {
-                body = b.Text()?.to_string_lossy();
-            }
-            (publish_handler)(NotiEvent::now(app_id, app_name, title, body));
-            Ok(())
-        });
+        let handler =
+            TypedEventHandler::<UserNotificationListener, UserNotificationChangedEventArgs>::new(
+                move |_sender, args| {
+                    let Some(args) = args.as_ref() else {
+                        return Ok(());
+                    };
+                    let id = args.UserNotificationId()?;
+                    let listener = UserNotificationListener::Current()?;
+                    let notif = listener.GetNotification(id)?;
+                    let app_info = notif.AppInfo()?;
+                    let app_id = app_info.AppUserModelId()?.to_string_lossy();
+                    let app_name = app_info.DisplayInfo()?.DisplayName()?.to_string_lossy();
+                    let binding = notif
+                        .Notification()?
+                        .Visual()?
+                        .GetBinding(&KnownNotificationBindings::ToastGeneric()?)?;
+                    let texts = binding.GetTextElements()?;
+                    let mut title = String::new();
+                    let mut body = String::new();
+                    if let Ok(t) = texts.GetAt(0) {
+                        title = t.Text()?.to_string_lossy();
+                    }
+                    if let Ok(b) = texts.GetAt(1) {
+                        body = b.Text()?.to_string_lossy();
+                    }
+                    (publish_handler)(NotiEvent::now(app_id, app_name, title, body));
+                    Ok(())
+                },
+            );
 
         let token = listener.NotificationChanged(&handler)?;
         *self.token.lock() = Some(token);

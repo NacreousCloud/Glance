@@ -64,8 +64,8 @@ impl SettingsStore {
 }
 
 pub fn default_config_path() -> PathBuf {
-    let proj = directories::ProjectDirs::from("dev", "mouse-noti", "mouse-noti")
-        .expect("project dirs");
+    let proj =
+        directories::ProjectDirs::from("dev", "mouse-noti", "mouse-noti").expect("project dirs");
     proj.config_dir().join("config.toml")
 }
 
@@ -79,7 +79,10 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("config.toml");
         let store = SettingsStore::new(&path);
-        let s = Settings { indicator_style: IndicatorStyle::IconBadge, autostart: true };
+        let s = Settings {
+            indicator_style: IndicatorStyle::IconBadge,
+            autostart: true,
+        };
         store.save(&s).unwrap();
         let loaded = store.load();
         assert_eq!(loaded, s);
@@ -90,7 +93,10 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("config.toml");
         let store = SettingsStore::new(&path);
-        let good = Settings { indicator_style: IndicatorStyle::PersistentBadge, autostart: false };
+        let good = Settings {
+            indicator_style: IndicatorStyle::PersistentBadge,
+            autostart: false,
+        };
         store.save(&good).unwrap();
         std::fs::write(&path, "GARBAGE").unwrap();
         let loaded = store.load();

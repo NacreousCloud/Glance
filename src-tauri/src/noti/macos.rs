@@ -2,9 +2,8 @@
 
 use super::{NotiEvent, NotificationSource, Publisher};
 use accessibility_sys::{
-    kAXChildrenAttribute, kAXErrorSuccess, kAXTitleAttribute,
-    AXIsProcessTrustedWithOptions, AXUIElementCopyAttributeValue,
-    AXUIElementCreateApplication, AXUIElementRef,
+    kAXChildrenAttribute, kAXErrorSuccess, kAXTitleAttribute, AXIsProcessTrustedWithOptions,
+    AXUIElementCopyAttributeValue, AXUIElementCreateApplication, AXUIElementRef,
 };
 use core_foundation::array::{CFArray, CFArrayRef};
 use core_foundation::base::{CFRelease, CFType, CFTypeRef, TCFType};
@@ -180,8 +179,7 @@ unsafe fn descend(elem: AXUIElementRef, out: &mut Vec<String>, depth: usize) {
         // Consumes the +1 retain. The CFArray owns the AXUIElementRefs it
         // holds — we recurse with the array alive on the stack frame so the
         // child refs remain valid throughout the for-loop.
-        let arr: CFArray<CFType> =
-            CFArray::wrap_under_create_rule(children_value as CFArrayRef);
+        let arr: CFArray<CFType> = CFArray::wrap_under_create_rule(children_value as CFArrayRef);
         for item in arr.iter() {
             let child = item.as_CFTypeRef() as AXUIElementRef;
             descend(child, out, depth + 1);
