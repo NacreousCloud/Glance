@@ -22,12 +22,16 @@ pub fn spawn<R: Runtime>(app: AppHandle<R>, bus: EventBus, style_provider: impl 
             let style = style_provider();
             let Some(pos) = cursor::current_position() else { continue };
             let Some(win) = ensure_window(&app) else { continue };
-            display::position_overlay_at(&win, pos);
+            let Some(placement) = display::position_overlay_at(&win, pos) else { continue };
             let _ = win.show();
+            let local_logical = (
+                (pos.0 - placement.origin_x) / placement.scale,
+                (pos.1 - placement.origin_y) / placement.scale,
+            );
             let payload = IndicatorPayload {
                 style,
-                cursor_x: pos.0,
-                cursor_y: pos.1,
+                cursor_x: local_logical.0,
+                cursor_y: local_logical.1,
                 app_name: event.app_name.clone(),
                 title: event.title.clone(),
             };
