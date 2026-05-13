@@ -7,7 +7,7 @@ pub struct NotiEvent {
     pub app_name: String,
     pub title: String,
     pub body: String,
-    pub timestamp_ms: u128,
+    pub id: u128,
 }
 
 impl NotiEvent {
@@ -17,16 +17,16 @@ impl NotiEvent {
         title: impl Into<String>,
         body: impl Into<String>,
     ) -> Self {
-        let timestamp_ms = SystemTime::now()
+        let id = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_millis())
+            .map(|d| d.as_nanos())
             .unwrap_or(0);
         Self {
             app_id: app_id.into(),
             app_name: app_name.into(),
             title: title.into(),
             body: body.into(),
-            timestamp_ms,
+            id,
         }
     }
 }

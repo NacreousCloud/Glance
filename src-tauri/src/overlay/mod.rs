@@ -50,7 +50,7 @@ pub fn spawn<R: Runtime>(
                 (pos.1 - placement.origin_y) / placement.scale,
             );
             let payload = IndicatorPayload {
-                id: event.timestamp_ms,
+                id: event.id,
                 style,
                 cursor_x: local_logical.0,
                 cursor_y: local_logical.1,

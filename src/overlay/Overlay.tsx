@@ -15,18 +15,20 @@ type Payload = {
 };
 
 export default function Overlay() {
-  const [active, setActive] = useState<Payload | null>(null);
-  const timer = useRef<number>();
+  const [indicators, setIndicators] = useState<Payload[]>([]);
 
   useEffect(() => {
     let unlisten: UnlistenFn | undefined;
 
     const setup = async () => {
       unlisten = await listen<Payload>('noti:show', (e) => {
-        window.clearTimeout(timer.current);
-        setActive(e.payload);
-        const duration = e.payload.style === 'persistent_badge' ? 5000 : 900;
-        timer.current = window.setTimeout(() => setActive(null), duration);
+        const payload = e.payload;
+        setIndicators((prev) => [...prev, payload]);
+
+        const duration = payload.style === 'persistent_badge' ? 5000 : 900;
+        window.setTimeout(() => {
+          setIndicators((prev) => prev.filter((i) => i.id !== payload.id));
+        }, duration);
       });
     };
 
@@ -34,38 +36,44 @@ export default function Overlay() {
 
     return () => {
       if (unlisten) unlisten();
-      window.clearTimeout(timer.current);
     };
   }, []);
 
-  if (!active) return null;
-  switch (active.style) {
-    case 'ring_pulse':
-      return (
-        <RingPulse
-          key={active.id}
-          x={active.cursor_x}
-          y={active.cursor_y}
-        />
-      );
-    case 'icon_badge':
-      return (
-        <IconBadge
-          key={active.id}
-          x={active.cursor_x}
-          y={active.cursor_y}
-          appName={active.app_name}
-        />
-      );
-    case 'persistent_badge':
-      return (
-        <PersistentBadge
-          key={active.id}
-          x={active.cursor_x}
-          y={active.cursor_y}
-          appName={active.app_name}
-        />
-      );
-  }
+  return (
+    <>
+      {indicators.map((active) => {
+        switch (active.style) {
+          case 'ring_pulse':
+            return (
+              <RingPulse
+                key={active.id}
+                x={active.cursor_x}
+                y={active.cursor_y}
+              />
+            );
+          case 'icon_badge':
+            return (
+              <IconBadge
+                key={active.id}
+                x={active.cursor_x}
+                y={active.cursor_y}
+                appName={active.app_name}
+              />
+            );
+          case 'persistent_badge':
+            return (
+              <PersistentBadge
+                key={active.id}
+                x={active.cursor_x}
+                y={active.cursor_y}
+                appName={active.app_name}
+              />
+            );
+          default:
+            return null;
+        }
+      })}
+    </>
+  );
 }
 
