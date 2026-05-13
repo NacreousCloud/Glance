@@ -26,11 +26,11 @@ pub fn permission_status() -> PermissionStatus {
     #[cfg(target_os = "macos")]
     {
         let ok = crate::noti::macos::MacosNotiSource::is_trusted(false);
-        return PermissionStatus {
+        PermissionStatus {
             accessibility_ok: ok,
             notification_listener_ok: true,
             platform: "macos",
-        };
+        }
     }
     #[cfg(target_os = "windows")]
     {
@@ -41,11 +41,11 @@ pub fn permission_status() -> PermissionStatus {
             ),
             Err(_) => false,
         };
-        return PermissionStatus {
+        PermissionStatus {
             accessibility_ok: true,
             notification_listener_ok: ok,
             platform: "windows",
-        };
+        }
     }
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     PermissionStatus {

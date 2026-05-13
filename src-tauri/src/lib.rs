@@ -85,7 +85,7 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            tray::install(&app.handle())?;
+            tray::install(app.handle())?;
             let store_for_style = store.clone();
             let bus_clone = bus.clone();
             overlay::spawn(app.handle().clone(), bus_clone, move || {
