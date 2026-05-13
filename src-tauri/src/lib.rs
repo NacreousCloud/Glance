@@ -1,3 +1,8 @@
+pub mod event_bus;
+pub mod noti;
+pub mod overlay;
+pub mod settings;
+
 mod tray;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
