@@ -7,6 +7,7 @@ pub mod settings;
 mod tray;
 
 use std::sync::Arc;
+use parking_lot::Mutex;
 
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
@@ -16,30 +17,45 @@ use event_bus::EventBus;
 use noti::{NotiEvent, NotificationSource};
 use settings::{default_config_path, SettingsStore};
 
-fn start_os_source(bus: &EventBus) {
+pub struct ActiveSource(pub Arc<Mutex<Option<Box<dyn NotificationSource>>>>);
+
+fn start_os_source(app: &tauri::AppHandle, bus: &EventBus) {
     let bus = bus.clone();
     let publish: Box<dyn Fn(NotiEvent) + Send + Sync> = Box::new(move |e| {
         bus.publish(e);
     });
-    #[cfg(target_os = "macos")]
-    {
-        let src = noti::macos::MacosNotiSource::new();
-        if let Err(e) = src.start(publish) {
-            tracing::warn!(error = %e, "macOS source failed to start");
+
+    let source: Option<Box<dyn NotificationSource>> = {
+        #[cfg(target_os = "macos")]
+        {
+            let src = noti::macos::MacosNotiSource::new();
+            if let Err(e) = src.start(publish) {
+                tracing::warn!(error = %e, "macOS source failed to start");
+                None
+            } else {
+                Some(Box::new(src))
+            }
         }
-        std::mem::forget(src); // hold for app lifetime
-    }
-    #[cfg(target_os = "windows")]
-    {
-        let src = noti::windows::WindowsNotiSource::new();
-        if let Err(e) = src.start(publish) {
-            tracing::warn!(error = %e, "Windows source failed to start");
+        #[cfg(target_os = "windows")]
+        {
+            let src = noti::windows::WindowsNotiSource::new();
+            if let Err(e) = src.start(publish) {
+                tracing::warn!(error = %e, "Windows source failed to start");
+                None
+            } else {
+                Some(Box::new(src))
+            }
         }
-        std::mem::forget(src);
-    }
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-    {
-        let _ = publish; // silence unused warning on other platforms
+        #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+        {
+            let _ = publish;
+            None
+        }
+    };
+
+    if let Some(s) = source {
+        let active_source = app.state::<ActiveSource>();
+        *active_source.0.lock() = Some(s);
     }
 }
 
@@ -54,8 +70,7 @@ pub fn run() {
 
     let bus = EventBus::new();
     let store = Arc::new(SettingsStore::new(default_config_path()));
-
-    start_os_source(&bus);
+    let active_source = ActiveSource(Arc::new(Mutex::new(None)));
 
     let debug_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
 
@@ -82,6 +97,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(bus.clone())
         .manage(store.clone())
+        .manage(active_source)
         .invoke_handler({
             #[cfg(feature = "mock-os")]
             {
@@ -108,6 +124,9 @@ pub fn run() {
             app.global_shortcut().register(ctrl_shift_d)?;
 
             tray::install(app.handle())?;
+
+            start_os_source(app.handle(), &bus);
+
             let store_for_style = store.clone();
             let bus_clone = bus.clone();
             overlay::spawn(app.handle().clone(), bus_clone, move || {

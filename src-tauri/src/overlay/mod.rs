@@ -8,6 +8,7 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewWindow};
 
 #[derive(Serialize, Clone)]
 pub struct IndicatorPayload {
+    pub id: u128,
     pub style: IndicatorStyle,
     pub cursor_x: f64,
     pub cursor_y: f64,
@@ -49,6 +50,7 @@ pub fn spawn<R: Runtime>(
                 (pos.1 - placement.origin_y) / placement.scale,
             );
             let payload = IndicatorPayload {
+                id: event.timestamp_ms,
                 style,
                 cursor_x: local_logical.0,
                 cursor_y: local_logical.1,
