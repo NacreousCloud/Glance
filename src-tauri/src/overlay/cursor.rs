@@ -21,6 +21,7 @@ mod platform {
 
 #[cfg(target_os = "macos")]
 mod platform {
+    use core_graphics::display::CGDisplay;
     use core_graphics::event::CGEvent;
     use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 
@@ -28,7 +29,31 @@ mod platform {
         let src = CGEventSource::new(CGEventSourceStateID::CombinedSessionState).ok()?;
         let evt = CGEvent::new(src).ok()?;
         let loc = evt.location();
-        Some((loc.x, loc.y))
+        // CGEvent.location is in points; multiply by main display scale to get pixels.
+        // NOTE: This uses the MAIN display's scale, not the cursor's containing display.
+        // For typical setups (all-Retina or all-non-Retina) this is correct. Mixed-DPI
+        // setups (e.g. Retina laptop + non-Retina external) will over-scale the cursor
+        // on the external monitor. Fixing requires looking up the display containing the
+        // cursor and using its pixel scale. Accepted for MVP.
+        let scale = main_display_scale();
+        Some((loc.x * scale, loc.y * scale))
+    }
+
+    fn main_display_scale() -> f64 {
+        // CGDisplay-based scale lookup. Avoids AppKit's NSScreen, which requires
+        // a MainThreadMarker — our cursor loop runs on a worker thread.
+        let display = CGDisplay::main();
+        let mode = match display.display_mode() {
+            Some(m) => m,
+            None => return 1.0,
+        };
+        let logical_w = mode.width() as f64;
+        let pixel_w = mode.pixel_width() as f64;
+        if logical_w > 0.0 {
+            pixel_w / logical_w
+        } else {
+            1.0
+        }
     }
 }
 
