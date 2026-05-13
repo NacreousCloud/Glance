@@ -23,7 +23,7 @@ pub fn position_overlay_at<R: Runtime>(
     })
 }
 
-fn pick_monitor<'a>(monitors: &'a [Monitor], pos: (f64, f64)) -> Option<&'a Monitor> {
+fn pick_monitor(monitors: &[Monitor], pos: (f64, f64)) -> Option<&Monitor> {
     monitors.iter().find(|m| {
         let p = m.position();
         let s = m.size();

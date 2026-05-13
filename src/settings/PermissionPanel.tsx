@@ -12,7 +12,7 @@ export default function PermissionPanel() {
   }, []);
 
   if (!status) return null;
-  const required =
+  const granted =
     status.platform === 'macos' ? status.accessibility_ok : status.notification_listener_ok;
   const label = status.platform === 'macos' ? 'Accessibility' : 'Notification listener';
 
@@ -22,11 +22,11 @@ export default function PermissionPanel() {
       <div className="flex items-center justify-between border rounded p-3">
         <div>
           <div className="font-medium">{label}</div>
-          <div className={required ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
-            {required ? 'Granted' : 'Required'}
+          <div className={granted ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
+            {granted ? 'Granted' : 'Required'}
           </div>
         </div>
-        {!required && (
+        {!granted && (
           <button
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
             onClick={() => requestPermission().then(refresh)}

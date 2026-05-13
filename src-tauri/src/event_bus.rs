@@ -51,7 +51,9 @@ impl EventBus {
             rec.retain(|(t, _)| now.duration_since(*t) < RECENT_WINDOW);
             rec.push((now, event.clone()));
         }
-        let _ = self.tx.send(event);
+        if self.tx.send(event).is_err() {
+            tracing::trace!("noti event published with no overlay subscriber");
+        }
         true
     }
 
