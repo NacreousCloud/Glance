@@ -170,14 +170,8 @@ impl NotificationSource for MacosNotiSource {
         let publish = Arc::new(publish);
 
         std::thread::spawn(move || {
-            let conn = match open_db() {
-                Ok(c) => c,
-                Err(e) => {
-                    tracing::error!(error = %e, "failed to open usernoted DB in poll thread");
-                    return;
-                }
-            };
-            let mut last_rec_id = match current_max_rec_id(&conn) {
+            // Establish baseline by opening once and reading max rec_id.
+            let mut last_rec_id = match open_db().and_then(|c| Ok(current_max_rec_id(&c)?)) {
                 Ok(v) => v,
                 Err(e) => {
                     tracing::error!(error = %e, "failed to read max rec_id");
@@ -194,6 +188,18 @@ impl NotificationSource for MacosNotiSource {
             while *running.lock() {
                 std::thread::sleep(POLL_INTERVAL);
                 tick += 1;
+                // Reopen each poll: SQLite WAL readers cache the WAL index in
+                // the connection. Without reopening, new writes from usernoted
+                // appear seconds late on busy systems.
+                let conn = match open_db() {
+                    Ok(c) => c,
+                    Err(e) => {
+                        if tick % 20 == 0 {
+                            tracing::warn!(error = %e, "reopen usernoted db failed");
+                        }
+                        continue;
+                    }
+                };
                 match query_new(&conn, last_rec_id) {
                     Ok(rows) => {
                         if tick % 20 == 0 {
