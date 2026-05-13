@@ -1,3 +1,4 @@
+pub mod commands;
 pub mod event_bus;
 pub mod noti;
 pub mod overlay;
@@ -6,6 +7,39 @@ pub mod settings;
 mod tray;
 
 use std::sync::Arc;
+
+use commands::{get_settings, permission_status, request_permission, set_settings};
+use event_bus::EventBus;
+use noti::{NotiEvent, NotificationSource};
+use settings::{default_config_path, SettingsStore};
+
+fn start_os_source(bus: &EventBus) {
+    let bus = bus.clone();
+    let publish: Box<dyn Fn(NotiEvent) + Send + Sync> =
+        Box::new(move |e| {
+            bus.publish(e);
+        });
+    #[cfg(target_os = "macos")]
+    {
+        let src = noti::macos::MacosNotiSource::new();
+        if let Err(e) = src.start(publish) {
+            tracing::warn!(error = %e, "macOS source failed to start");
+        }
+        std::mem::forget(src); // hold for app lifetime
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let src = noti::windows::WindowsNotiSource::new();
+        if let Err(e) = src.start(publish) {
+            tracing::warn!(error = %e, "Windows source failed to start");
+        }
+        std::mem::forget(src);
+    }
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        let _ = publish; // silence unused warning on other platforms
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -16,14 +50,21 @@ pub fn run() {
         )
         .try_init();
 
-    let bus = event_bus::EventBus::new();
-    let store = Arc::new(settings::SettingsStore::new(settings::default_config_path()));
+    let bus = EventBus::new();
+    let store = Arc::new(SettingsStore::new(default_config_path()));
+
+    start_os_source(&bus);
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(bus.clone())
         .manage(store.clone())
-        .invoke_handler(tauri::generate_handler![])
+        .invoke_handler(tauri::generate_handler![
+            get_settings,
+            set_settings,
+            permission_status,
+            request_permission
+        ])
         .setup(move |app| {
             tray::install(&app.handle())?;
             let store_for_style = store.clone();
