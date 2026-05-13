@@ -39,9 +39,12 @@ impl EventBus {
         let now = Instant::now();
         {
             let mut last = self.last_per_app.lock();
-            if let Some(prev) = last.get(&event.app_id) {
-                if now.duration_since(*prev) < DEBOUNCE {
-                    return false;
+            // Bypass debounce for debug notifications
+            if event.app_id != "dev.debug" {
+                if let Some(prev) = last.get(&event.app_id) {
+                    if now.duration_since(*prev) < DEBOUNCE {
+                        return false;
+                    }
                 }
             }
             last.insert(event.app_id.clone(), now);
