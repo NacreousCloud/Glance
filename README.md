@@ -21,9 +21,10 @@ Phase 1 (MVP). 인디케이터 표시까지. 라디얼 퀵메뉴는 Phase 2 예�
 ### macOS
 
 - Xcode Command Line Tools: `xcode-select --install`
-- **Accessibility 권한**: 첫 실행 시 시스템이 권한 요청 다이얼로그를 띄움. 거부해도 앱은 동작하지만, 시스템 알림 감지는 안 됨 (`mock-os` 기능으로 테스트 가능).
-  - 권한 부여: 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → mouse-noti 토글 ON.
-  - 권한 변경 후 앱 재시작 필요.
+- **권한**: 알림 인디케이터 자체는 CGWindowList 폴링으로 동작하므로 Accessibility 권한 불필요. Screen Recording 권한도 불필요 (window title은 읽지 않음). 첫 실행 시 권한 다이얼로그가 뜨더라도 알림 인디케이터 동작과는 무관.
+  - Accessibility는 향후 Phase 2 (라디얼 메뉴 단축키, 추가 hooking)에서 사용 예정. 미리 부여해두면 좋음:
+    - 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → mouse-noti 토글 ON.
+    - 권한 변경 후 앱 재시작 필요.
 
 ### Windows
 
@@ -169,7 +170,9 @@ pnpm install
 ## 알려진 제약 (MVP)
 
 - **macOS mixed-DPI**: Retina 노트북 + 외부 non-Retina 모니터 조합에서 외부 모니터 인디케이터 위치가 부정확. 메인 디스플레이 스케일을 기준으로 계산하기 때문. 향후 fix 예정.
-- **Notification Center chrome 필터**: macOS는 "Notifications", "Do Not Disturb" 같은 UI 요소가 알림처럼 잘못 잡힐 수 있어 deny-list로 필터링. OS 업데이트로 deny-list 갱신 필요할 수 있음.
+- **macOS 알림 텍스트 누락**: 인디케이터는 banner 윈도우 등장 시점을 즉시 감지하지만, banner의 title/body 텍스트는 비어있음. Screen Recording 권한을 요구하지 않기 위해 의도된 동작. Icon Badge / Persistent Badge 스타일은 sender (예: "nbagent", "NotificationCenter")의 첫 글자 또는 이름을 표시.
+- **macOS DND/Focus 차단 알림**: banner UI가 표시되지 않은 알림(do-not-disturb, focus mode 차단 등)은 인디케이터도 발생하지 않음. CGWindowList polling은 banner 표시 시점을 기준으로 함.
+- **macOS candidate 호스트 변경**: nbagent / NotificationCenter / UserNotificationCenter 세 프로세스를 폴링. macOS 메이저 업데이트로 banner 호스트 프로세스가 바뀌면 추가 필요 (`CANDIDATE_BUNDLE_IDS` / `CANDIDATE_EXEC_NAMES` 상수).
 
 ---
 
