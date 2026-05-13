@@ -27,9 +27,13 @@ pub fn spawn<R: Runtime>(
 ) {
     let mut rx = bus.subscribe();
 
-    // Ensure initial overlay window is click-through
+    // Ensure initial overlay window is click-through and visible everywhere.
     if let Some(win) = ensure_window(&app) {
         let _ = win.set_ignore_cursor_events(true);
+        // Visible across all macOS desktop spaces + fullscreen apps.
+        let _ = win.set_visible_on_all_workspaces(true);
+        // Re-assert always-on-top in case settings drift.
+        let _ = win.set_always_on_top(true);
     }
 
     tauri::async_runtime::spawn(async move {
@@ -72,8 +76,11 @@ pub fn spawn<R: Runtime>(
                 "overlay positioned"
             );
 
-            // Double check click-through is enabled whenever showing
+            // Re-assert window properties on every show. macOS occasionally
+            // strips these when the window moves between displays / spaces.
             let _ = win.set_ignore_cursor_events(true);
+            let _ = win.set_visible_on_all_workspaces(true);
+            let _ = win.set_always_on_top(true);
             if let Err(e) = win.show() {
                 tracing::warn!(error = %e, "win.show failed");
             }
