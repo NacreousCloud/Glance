@@ -13,7 +13,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
-const POLL_INTERVAL: Duration = Duration::from_millis(500);
+const POLL_INTERVAL: Duration = Duration::from_millis(200);
+// Apple's Cocoa reference date offset: seconds from Unix epoch to 2001-01-01.
+const COCOA_TO_UNIX_OFFSET: f64 = 978_307_200.0;
 
 pub struct MacosNotiSource {
     running: Arc<Mutex<bool>>,
@@ -76,11 +78,12 @@ struct Row {
     app_id: String,
     title: String,
     body: String,
+    delivered_cocoa: f64,
 }
 
 fn query_new(conn: &Connection, after: i64) -> rusqlite::Result<Vec<Row>> {
     let mut stmt = conn.prepare(
-        "SELECT r.rec_id, COALESCE(a.identifier, ''), r.data
+        "SELECT r.rec_id, COALESCE(a.identifier, ''), r.data, COALESCE(r.delivered_date, r.request_date, 0)
          FROM record r LEFT JOIN app a ON r.app_id = a.app_id
          WHERE r.rec_id > ?1
          ORDER BY r.rec_id",
@@ -90,16 +93,26 @@ fn query_new(conn: &Connection, after: i64) -> rusqlite::Result<Vec<Row>> {
             let rec_id: i64 = row.get(0)?;
             let identifier: String = row.get(1)?;
             let data: Vec<u8> = row.get(2)?;
+            let delivered_cocoa: f64 = row.get(3)?;
             let (title, body) = extract_text(&data);
             Ok(Row {
                 rec_id,
                 app_id: identifier,
                 title,
                 body,
+                delivered_cocoa,
             })
         })?
         .collect::<rusqlite::Result<Vec<_>>>()?;
     Ok(rows)
+}
+
+fn now_unix_secs() -> f64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs_f64())
+        .unwrap_or(0.0)
 }
 
 fn extract_text(data: &[u8]) -> (String, String) {
@@ -197,10 +210,13 @@ impl NotificationSource for MacosNotiSource {
                             } else {
                                 r.app_id.clone()
                             };
+                            let delivered_unix = r.delivered_cocoa + COCOA_TO_UNIX_OFFSET;
+                            let latency_s = (now_unix_secs() - delivered_unix).max(0.0);
                             tracing::info!(
                                 rec_id = r.rec_id,
                                 app_id = %app_id,
                                 title = %r.title,
+                                latency_s = format!("{:.3}", latency_s),
                                 "new macOS notification from db"
                             );
                             (publish)(NotiEvent::now(
