@@ -6,7 +6,8 @@ import PersistentBadge from './PersistentBadge';
 
 type Style = 'ring_pulse' | 'icon_badge' | 'persistent_badge';
 type Payload = {
-  id: number;
+  id: string;
+  timestamp_ms: number;
   style: Style;
   cursor_x: number;
   cursor_y: number;

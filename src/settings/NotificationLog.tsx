@@ -39,7 +39,7 @@ export default function NotificationLog() {
                 <div className="flex justify-between items-start">
                   <span className="font-bold text-gray-700">{log.app_name}</span>
                   <span className="text-[10px] text-gray-400 font-mono">
-                    {new Date(Number(log.id / 1000000n)).toLocaleTimeString()}
+                    {new Date(log.timestamp_ms).toLocaleTimeString()}
                   </span>
                 </div>
                 <div className="font-medium text-gray-600 truncate">{log.title}</div>

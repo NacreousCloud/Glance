@@ -9,7 +9,8 @@ export type PermissionStatus = {
 };
 
 export type NotiEvent = {
-  id: number;
+  id: string;
+  timestamp_ms: number;
   app_id: string;
   app_name: string;
   title: string;
