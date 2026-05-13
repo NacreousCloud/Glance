@@ -35,6 +35,9 @@ pub trait NotificationSource: Send + Sync {
 
 pub mod mock;
 
+#[cfg(target_os = "windows")]
+pub mod windows;
+
 #[cfg(test)]
 mod tests {
     use super::*;
