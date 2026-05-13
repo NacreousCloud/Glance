@@ -32,7 +32,19 @@ const CHROME_TITLES: &[&str] = &[
     "Close",
 ];
 
-const NOTIFICATION_CENTER_BUNDLE_ID: &str = "com.apple.notificationcenterui";
+// Bundle IDs / executable names that host notification UI on macOS.
+// Different macOS versions split banner / drawer / agent across processes.
+const CANDIDATE_BUNDLE_IDS: &[&str] = &[
+    "com.apple.notificationcenterui",
+    "com.apple.UserNotificationCenter",
+    "com.apple.nbagent",
+    "com.apple.usernoted",
+];
+const CANDIDATE_EXEC_NAMES: &[&str] = &[
+    "nbagent",
+    "NotificationCenter",
+    "UserNotificationCenter",
+];
 
 pub struct MacosNotiSource {
     running: Arc<Mutex<bool>>,
@@ -60,22 +72,37 @@ impl MacosNotiSource {
         }
     }
 
-    fn find_nc_pid() -> Option<i32> {
+    fn find_candidate_pids() -> Vec<(i32, String)> {
         use objc2_app_kit::NSWorkspace;
         let workspace = unsafe { NSWorkspace::sharedWorkspace() };
         let apps = unsafe { workspace.runningApplications() };
         let count = apps.count();
+        let mut out = Vec::new();
         for i in 0..count {
             let app = unsafe { apps.objectAtIndex(i) };
-            let bundle_id = unsafe { app.bundleIdentifier() };
-            if let Some(id) = bundle_id {
-                if id.to_string() == NOTIFICATION_CENTER_BUNDLE_ID {
-                    let pid: i32 = unsafe { app.processIdentifier() };
-                    return Some(pid);
-                }
+            let bundle_id = unsafe { app.bundleIdentifier() }.map(|s| s.to_string());
+            let exec_url = unsafe { app.executableURL() };
+            let exec_name = exec_url.and_then(|u| {
+                let path = unsafe { u.path() }?.to_string();
+                path.rsplit('/').next().map(|s| s.to_string())
+            });
+
+            let bundle_match = bundle_id
+                .as_deref()
+                .map(|id| CANDIDATE_BUNDLE_IDS.contains(&id))
+                .unwrap_or(false);
+            let exec_match = exec_name
+                .as_deref()
+                .map(|n| CANDIDATE_EXEC_NAMES.contains(&n))
+                .unwrap_or(false);
+
+            if bundle_match || exec_match {
+                let pid: i32 = unsafe { app.processIdentifier() };
+                let label = bundle_id.or(exec_name).unwrap_or_else(|| format!("pid:{pid}"));
+                out.push((pid, label));
             }
         }
-        None
+        out
     }
 }
 
@@ -85,20 +112,21 @@ impl NotificationSource for MacosNotiSource {
             anyhow::bail!("Accessibility permission not granted");
         }
 
-        let pid = Self::find_nc_pid().ok_or_else(|| {
-            tracing::error!(
-                "Could not find Notification Center process (com.apple.notificationcenterui)"
-            );
-            anyhow::anyhow!("Notification Center not found")
-        })?;
-        tracing::info!(pid, "Found Notification Center process");
+        let candidates = Self::find_candidate_pids();
+        if candidates.is_empty() {
+            tracing::error!("No notification UI host process found");
+            anyhow::bail!("No notification host process found");
+        }
+        for (pid, label) in &candidates {
+            tracing::info!(pid, %label, "Tracking notification host process");
+        }
 
         *self.running.lock() = true;
         let running = self.running.clone();
         let publish = Arc::new(publish);
 
         std::thread::spawn(move || {
-            tracing::info!(interval_ms = %POLL_INTERVAL.as_millis(), "macOS poll loop started");
+            tracing::info!(interval_ms = %POLL_INTERVAL.as_millis(), candidate_count = candidates.len(), "macOS poll loop started");
             let mut seen_set: HashSet<String> = HashSet::new();
             let mut seen_order: VecDeque<String> = VecDeque::new();
             let mut tick: u64 = 0;
@@ -107,7 +135,12 @@ impl NotificationSource for MacosNotiSource {
                 std::thread::sleep(POLL_INTERVAL);
                 tick += 1;
 
-                let titles = unsafe { read_nc_titles(pid) }.unwrap_or_default();
+                let mut titles: Vec<String> = Vec::new();
+                for (pid, _label) in &candidates {
+                    if let Some(t) = unsafe { read_nc_titles(*pid) } {
+                        titles.extend(t);
+                    }
+                }
 
                 if tick % 20 == 0 {
                     tracing::debug!(
