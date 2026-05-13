@@ -79,9 +79,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let path = dir.path().join("config.toml");
         let store = SettingsStore::new(&path);
-        let mut s = Settings::default();
-        s.indicator_style = IndicatorStyle::IconBadge;
-        s.autostart = true;
+        let s = Settings { indicator_style: IndicatorStyle::IconBadge, autostart: true };
         store.save(&s).unwrap();
         let loaded = store.load();
         assert_eq!(loaded, s);
