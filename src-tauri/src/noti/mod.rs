@@ -33,6 +33,8 @@ pub trait NotificationSource: Send + Sync {
     fn stop(&self);
 }
 
+pub mod mock;
+
 #[cfg(test)]
 mod tests {
     use super::*;
