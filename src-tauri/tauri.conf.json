@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "mouse-noti",
-        "width": 800,
-        "height": 600
+        "label": "settings",
+        "title": "mouse-noti — Settings",
+        "width": 720,
+        "height": 540,
+        "visible": false,
+        "resizable": true
       }
     ],
     "security": {
