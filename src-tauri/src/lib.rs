@@ -12,7 +12,13 @@ use parking_lot::Mutex;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-use commands::{get_settings, permission_status, request_permission, set_settings};
+use commands::{
+    get_recent_events, get_settings, permission_status, request_permission, set_settings,
+};
+
+#[cfg(feature = "mock-os")]
+use commands::inject_mock_event;
+
 use event_bus::EventBus;
 use noti::{NotiEvent, NotificationSource};
 use settings::{default_config_path, SettingsStore};
@@ -106,7 +112,8 @@ pub fn run() {
                     set_settings,
                     permission_status,
                     request_permission,
-                    commands::inject_mock_event
+                    inject_mock_event,
+                    get_recent_events
                 ]
             }
             #[cfg(not(feature = "mock-os"))]
@@ -115,7 +122,8 @@ pub fn run() {
                     get_settings,
                     set_settings,
                     permission_status,
-                    request_permission
+                    request_permission,
+                    get_recent_events
                 ]
             }
         })

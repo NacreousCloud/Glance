@@ -8,7 +8,16 @@ export type PermissionStatus = {
   platform: 'macos' | 'windows' | 'other';
 };
 
+export type NotiEvent = {
+  id: number;
+  app_id: string;
+  app_name: string;
+  title: string;
+  body: string;
+};
+
 export const getSettings = () => invoke<Settings>('get_settings');
 export const setSettings = (settings: Settings) => invoke<void>('set_settings', { settings });
 export const permissionStatus = () => invoke<PermissionStatus>('permission_status');
 export const requestPermission = () => invoke<void>('request_permission');
+export const getRecentEvents = () => invoke<NotiEvent[]>('get_recent_events');

@@ -89,3 +89,10 @@ pub fn inject_mock_event(
 ) {
     bus.publish(crate::noti::NotiEvent::now(app_id, app_name, title, body));
 }
+
+#[tauri::command]
+pub fn get_recent_events(
+    bus: tauri::State<crate::event_bus::EventBus>,
+) -> Vec<crate::noti::NotiEvent> {
+    bus.recent_within(std::time::Duration::from_secs(3600)) // Last hour
+}

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import StylePicker from './StylePicker';
 import PermissionPanel from './PermissionPanel';
 import AutoStartToggle from './AutoStartToggle';
+import NotificationLog from './NotificationLog';
 import { getSettings, setSettings, type Settings as S } from './api';
 
 export default function Settings() {
@@ -31,6 +32,9 @@ export default function Settings() {
         <span className="text-xs text-gray-400">v0.1.0</span>
       </div>
       <PermissionPanel />
+      <hr className="border-gray-100" />
+      <NotificationLog />
+      <hr className="border-gray-100" />
       <StylePicker
         value={state.indicator_style}
         onChange={(s) => update({ ...state, indicator_style: s })}
