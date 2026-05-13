@@ -11,9 +11,31 @@ type Payload = {
   style: Style;
   cursor_x: number;
   cursor_y: number;
+  viewport_w: number;
+  viewport_h: number;
   app_name: string;
   title: string;
 };
+
+// Keep the indicator visually inside the viewport even if Rust-side window
+// resize lags behind. Falls back to live window inner size when payload
+// viewport is missing.
+function clamp(payload: Payload): { x: number; y: number } {
+  const safety = 48;
+  const vw = payload.viewport_w || window.innerWidth;
+  const vh = payload.viewport_h || window.innerHeight;
+  const x = Math.max(safety, Math.min(payload.cursor_x, vw - safety));
+  const y = Math.max(safety, Math.min(payload.cursor_y, vh - safety));
+  if (x !== payload.cursor_x || y !== payload.cursor_y) {
+    console.debug('[overlay] clamped cursor', {
+      from: [payload.cursor_x, payload.cursor_y],
+      to: [x, y],
+      viewport: [vw, vh],
+      windowInner: [window.innerWidth, window.innerHeight],
+    });
+  }
+  return { x, y };
+}
 
 export default function Overlay() {
   const [indicators, setIndicators] = useState<Payload[]>([]);
@@ -43,30 +65,20 @@ export default function Overlay() {
   return (
     <>
       {indicators.map((active) => {
+        const { x, y } = clamp(active);
         switch (active.style) {
           case 'ring_pulse':
-            return (
-              <RingPulse
-                key={active.id}
-                x={active.cursor_x}
-                y={active.cursor_y}
-              />
-            );
+            return <RingPulse key={active.id} x={x} y={y} />;
           case 'icon_badge':
             return (
-              <IconBadge
-                key={active.id}
-                x={active.cursor_x}
-                y={active.cursor_y}
-                appName={active.app_name}
-              />
+              <IconBadge key={active.id} x={x} y={y} appName={active.app_name} />
             );
           case 'persistent_badge':
             return (
               <PersistentBadge
                 key={active.id}
-                x={active.cursor_x}
-                y={active.cursor_y}
+                x={x}
+                y={y}
                 appName={active.app_name}
               />
             );

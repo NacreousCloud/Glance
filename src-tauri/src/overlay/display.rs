@@ -3,6 +3,8 @@ use tauri::{Monitor, PhysicalPosition, PhysicalSize, Runtime, WebviewWindow};
 pub struct MonitorPlacement {
     pub origin_x: f64,
     pub origin_y: f64,
+    pub width: f64,
+    pub height: f64,
     pub scale: f64,
 }
 
@@ -19,6 +21,8 @@ pub fn position_overlay_at<R: Runtime>(
     Some(MonitorPlacement {
         origin_x: mp.x as f64,
         origin_y: mp.y as f64,
+        width: ms.width as f64,
+        height: ms.height as f64,
         scale: m.scale_factor(),
     })
 }
