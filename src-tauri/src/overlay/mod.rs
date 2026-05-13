@@ -15,14 +15,24 @@ pub struct IndicatorPayload {
     pub title: String,
 }
 
-pub fn spawn<R: Runtime>(app: AppHandle<R>, bus: EventBus, style_provider: impl Fn() -> IndicatorStyle + Send + 'static) {
+pub fn spawn<R: Runtime>(
+    app: AppHandle<R>,
+    bus: EventBus,
+    style_provider: impl Fn() -> IndicatorStyle + Send + 'static,
+) {
     let mut rx = bus.subscribe();
     tauri::async_runtime::spawn(async move {
         while let Ok(event) = rx.recv().await {
             let style = style_provider();
-            let Some(pos) = cursor::current_position() else { continue };
-            let Some(win) = ensure_window(&app) else { continue };
-            let Some(placement) = display::position_overlay_at(&win, pos) else { continue };
+            let Some(pos) = cursor::current_position() else {
+                continue;
+            };
+            let Some(win) = ensure_window(&app) else {
+                continue;
+            };
+            let Some(placement) = display::position_overlay_at(&win, pos) else {
+                continue;
+            };
             let _ = win.show();
             let local_logical = (
                 (pos.0 - placement.origin_x) / placement.scale,

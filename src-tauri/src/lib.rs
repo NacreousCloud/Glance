@@ -8,6 +8,9 @@ mod tray;
 
 use std::sync::Arc;
 
+use tauri::Manager;
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+
 use commands::{get_settings, permission_status, request_permission, set_settings};
 use event_bus::EventBus;
 use noti::{NotiEvent, NotificationSource};
@@ -15,10 +18,9 @@ use settings::{default_config_path, SettingsStore};
 
 fn start_os_source(bus: &EventBus) {
     let bus = bus.clone();
-    let publish: Box<dyn Fn(NotiEvent) + Send + Sync> =
-        Box::new(move |e| {
-            bus.publish(e);
-        });
+    let publish: Box<dyn Fn(NotiEvent) + Send + Sync> = Box::new(move |e| {
+        bus.publish(e);
+    });
     #[cfg(target_os = "macos")]
     {
         let src = noti::macos::MacosNotiSource::new();
@@ -55,7 +57,24 @@ pub fn run() {
 
     start_os_source(&bus);
 
+    let debug_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
+
     tauri::Builder::default()
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(move |app, shortcut, event| {
+                    if event.state() == ShortcutState::Pressed && shortcut == &debug_shortcut {
+                        let bus = app.state::<EventBus>();
+                        bus.publish(NotiEvent::now(
+                            "dev.debug",
+                            "Debug Trigger",
+                            "Debug Notification",
+                            "Manual trigger for testing",
+                        ));
+                    }
+                })
+                .build(),
+        )
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
@@ -85,6 +104,9 @@ pub fn run() {
             }
         })
         .setup(move |app| {
+            let ctrl_shift_d = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
+            app.global_shortcut().register(ctrl_shift_d)?;
+
             tray::install(app.handle())?;
             let store_for_style = store.clone();
             let bus_clone = bus.clone();

@@ -11,7 +11,12 @@ pub struct NotiEvent {
 }
 
 impl NotiEvent {
-    pub fn now(app_id: impl Into<String>, app_name: impl Into<String>, title: impl Into<String>, body: impl Into<String>) -> Self {
+    pub fn now(
+        app_id: impl Into<String>,
+        app_name: impl Into<String>,
+        title: impl Into<String>,
+        body: impl Into<String>,
+    ) -> Self {
         let timestamp_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map(|d| d.as_millis())
