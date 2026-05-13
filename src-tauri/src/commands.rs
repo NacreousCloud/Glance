@@ -77,3 +77,15 @@ pub async fn request_permission() -> Result<(), String> {
     .await
     .map_err(|e| e.to_string())?
 }
+
+#[cfg(feature = "mock-os")]
+#[tauri::command]
+pub fn inject_mock_event(
+    bus: tauri::State<crate::event_bus::EventBus>,
+    app_id: String,
+    app_name: String,
+    title: String,
+    body: String,
+) {
+    bus.publish(crate::noti::NotiEvent::now(app_id, app_name, title, body));
+}

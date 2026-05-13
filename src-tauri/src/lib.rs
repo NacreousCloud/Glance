@@ -63,12 +63,27 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(bus.clone())
         .manage(store.clone())
-        .invoke_handler(tauri::generate_handler![
-            get_settings,
-            set_settings,
-            permission_status,
-            request_permission
-        ])
+        .invoke_handler({
+            #[cfg(feature = "mock-os")]
+            {
+                tauri::generate_handler![
+                    get_settings,
+                    set_settings,
+                    permission_status,
+                    request_permission,
+                    commands::inject_mock_event
+                ]
+            }
+            #[cfg(not(feature = "mock-os"))]
+            {
+                tauri::generate_handler![
+                    get_settings,
+                    set_settings,
+                    permission_status,
+                    request_permission
+                ]
+            }
+        })
         .setup(move |app| {
             tray::install(&app.handle())?;
             let store_for_style = store.clone();
