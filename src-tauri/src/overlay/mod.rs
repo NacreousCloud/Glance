@@ -21,6 +21,12 @@ pub fn spawn<R: Runtime>(
     style_provider: impl Fn() -> IndicatorStyle + Send + 'static,
 ) {
     let mut rx = bus.subscribe();
+
+    // Ensure initial overlay window is click-through
+    if let Some(win) = ensure_window(&app) {
+        let _ = win.set_ignore_cursor_events(true);
+    }
+
     tauri::async_runtime::spawn(async move {
         while let Ok(event) = rx.recv().await {
             let style = style_provider();
@@ -33,7 +39,11 @@ pub fn spawn<R: Runtime>(
             let Some(placement) = display::position_overlay_at(&win, pos) else {
                 continue;
             };
+
+            // Double check click-through is enabled whenever showing
+            let _ = win.set_ignore_cursor_events(true);
             let _ = win.show();
+
             let local_logical = (
                 (pos.0 - placement.origin_x) / placement.scale,
                 (pos.1 - placement.origin_y) / placement.scale,
