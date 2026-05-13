@@ -133,13 +133,14 @@ pub fn run() {
 
             tray::install(app.handle())?;
 
-            start_os_source(app.handle(), &bus);
-
+            // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.
             let store_for_style = store.clone();
             let bus_clone = bus.clone();
             overlay::spawn(app.handle().clone(), bus_clone, move || {
                 store_for_style.load().indicator_style
             });
+
+            start_os_source(app.handle(), &bus);
             Ok(())
         })
         .run(tauri::generate_context!())

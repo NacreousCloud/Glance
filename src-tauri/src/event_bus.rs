@@ -12,7 +12,7 @@ const RECENT_WINDOW: Duration = Duration::from_secs(5);
 #[derive(Clone)]
 pub struct EventBus {
     tx: broadcast::Sender<NotiEvent>,
-    last_per_app: Arc<Mutex<HashMap<String, Instant>>>,
+    last_per_app: Arc<Mutex<HashMap<(String, String), Instant>>>,
     recent: Arc<Mutex<Vec<(Instant, NotiEvent)>>>,
 }
 
@@ -34,20 +34,26 @@ impl EventBus {
         self.tx.subscribe()
     }
 
-    /// Publish with per-app debounce. Returns true if event was forwarded.
+    /// Publish with per-(app, title) debounce. Returns true if event was forwarded.
     pub fn publish(&self, event: NotiEvent) -> bool {
         let now = Instant::now();
+        let key = (event.app_id.clone(), event.title.clone());
         {
             let mut last = self.last_per_app.lock();
             // Bypass debounce for debug notifications
             if event.app_id != "dev.debug" {
-                if let Some(prev) = last.get(&event.app_id) {
+                if let Some(prev) = last.get(&key) {
                     if now.duration_since(*prev) < DEBOUNCE {
+                        tracing::debug!(
+                            app_id = %event.app_id,
+                            title = %event.title,
+                            "event debounced"
+                        );
                         return false;
                     }
                 }
             }
-            last.insert(event.app_id.clone(), now);
+            last.insert(key, now);
         }
         {
             let mut rec = self.recent.lock();
