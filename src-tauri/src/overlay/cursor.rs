@@ -1,1 +1,3 @@
-// Filled in Task 9
+pub fn current_position() -> Option<(f64, f64)> {
+    None
+}
