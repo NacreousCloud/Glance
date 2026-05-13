@@ -56,6 +56,10 @@ pub fn run() {
     start_os_source(&bus);
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(tauri_plugin_opener::init())
         .manage(bus.clone())
         .manage(store.clone())
