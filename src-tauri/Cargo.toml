@@ -18,8 +18,43 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+toml = "0.8"
+tokio = { version = "1", features = ["sync", "rt-multi-thread", "time", "macros"] }
+thiserror = "1"
+anyhow = "1"
+parking_lot = "0.12"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+directories = "5"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-foundation = "0.2"
+objc2-app-kit = "0.2"
+core-foundation = "0.10"
+core-graphics = "0.24"
+accessibility-sys = "0.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58", features = [
+  "UI_Notifications",
+  "UI_Notifications_Management",
+  "Foundation",
+  "Foundation_Collections",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Graphics_Gdi",
+] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["test-util", "macros"] }
+tempfile = "3"
+
+[features]
+default = []
+mock-os = []
 
