@@ -8,6 +8,25 @@ type Props = {
 
 const MOD_CMD = 1, MOD_CTRL = 2, MOD_SHIFT = 4, MOD_ALT = 8;
 
+const MOUSE_BUTTON_LABEL: Record<number, string> = {
+  1: 'Left',
+  2: 'Right',
+  3: 'Middle',
+  4: 'Back',
+  5: 'Forward',
+};
+
+function formatMouseBinding(button: number, mods: number): string {
+  const parts: string[] = [];
+  if (mods & MOD_CMD) parts.push('Cmd');
+  if (mods & MOD_CTRL) parts.push('Ctrl');
+  if (mods & MOD_SHIFT) parts.push('Shift');
+  if (mods & MOD_ALT) parts.push('Alt');
+  const label = MOUSE_BUTTON_LABEL[button] ?? `Mouse${button}`;
+  parts.push(label);
+  return parts.join('+');
+}
+
 export default function HotkeyCapture({ value, onChange }: Props) {
   const [capturing, setCapturing] = useState(false);
   const [mode, setMode] = useState<'keyboard' | 'mouse'>(
@@ -32,10 +51,20 @@ export default function HotkeyCapture({ value, onChange }: Props) {
     const onMouseDown = (e: MouseEvent) => {
       if (mode !== 'mouse') return;
       // Browser MouseEvent.button: 0=left, 1=middle, 2=right, 3=back, 4=forward
-      // Translate to rdev convention: 1=left, 2=right, 3=middle, 4=back, 5=forward
+      // Translate to settings convention: 1=left, 2=right, 3=middle, 4=back, 5=forward
       const map = [1, 3, 2, 4, 5];
       const button = map[e.button] ?? 0;
       if (button === 0) return;
+      // Backend only observes OtherMouseDown (buttons 3+). Left/right
+      // capture is rejected so users do not save a binding that never
+      // fires.
+      if (button === 1 || button === 2) {
+        alert(
+          'Left and right mouse buttons cannot be used as hotkeys. ' +
+            'Pick middle / back / forward.'
+        );
+        return;
+      }
       e.preventDefault();
       let modifiers = 0;
       if (e.metaKey) modifiers |= MOD_CMD;
@@ -65,18 +94,25 @@ export default function HotkeyCapture({ value, onChange }: Props) {
         </button>
         <button
           type="button"
-          className="px-2 py-1 rounded bg-gray-50 text-gray-400 cursor-not-allowed"
-          disabled
-          title="Mouse hotkeys are temporarily disabled on macOS (rdev crash workaround). Coming back in a follow-up release."
+          className={`px-2 py-1 rounded ${mode === 'mouse' ? 'bg-blue-100' : 'bg-gray-100'}`}
+          onClick={() => setMode('mouse')}
         >
-          Mouse (disabled)
+          Mouse
         </button>
       </div>
+      {mode === 'mouse' && (
+        <p className="text-xs text-gray-500">
+          Capture a mouse button 3+ (middle / back / forward). Left/right
+          are intentionally blocked. Requires Accessibility permission.
+          Combine with modifiers (Cmd/Shift/Alt/Ctrl) to avoid colliding
+          with normal clicks.
+        </p>
+      )}
       <div className="border rounded p-2 flex items-center justify-between">
         <code>
           {value.kind === 'keyboard'
             ? value.accelerator || '(none)'
-            : `Mouse ${value.button} + mods=${value.modifiers}`}
+            : formatMouseBinding(value.button, value.modifiers)}
         </code>
         <button
           type="button"

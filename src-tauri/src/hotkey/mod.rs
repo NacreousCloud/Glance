@@ -1,8 +1,6 @@
 pub mod keyboard;
-// Mouse hotkey listener (rdev-based) is disabled on macOS due to a
-// TSMGetInputSourceProperty main-thread assertion failure inside rdev's
-// keyboard conversion path. Tracked as a follow-up to re-implement via
-// NSEvent.addGlobalMonitorForEventsMatchingMask.
+#[cfg(target_os = "macos")]
+pub mod mouse;
 
 use crate::settings::HotkeyBinding;
 use parking_lot::Mutex;

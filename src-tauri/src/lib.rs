@@ -279,11 +279,20 @@ pub fn run() {
 
             start_os_source(app.handle(), &bus);
 
-            // Mouse hotkey listener is disabled on macOS — rdev triggers a
-            // TSMGetInputSourceProperty main-thread assertion inside its
-            // keyboard conversion path on macOS 15+. Track follow-up with
-            // NSEvent.addGlobalMonitorForEventsMatchingMask. Mouse bindings
-            // saved in settings are preserved but never fire.
+            // macOS mouse hotkey listener (NSEvent global monitor).
+            // Requires Accessibility permission. The monitor handle is
+            // intentionally leaked: it must live for the process lifetime,
+            // and `removeMonitor:` requires the main thread which is not
+            // guaranteed at Tauri state-drop time.
+            #[cfg(target_os = "macos")]
+            {
+                let monitor = hotkey::mouse::MouseMonitor::start(
+                    shared_bindings.clone(),
+                    hotkey_tx.clone(),
+                );
+                std::mem::forget(monitor);
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

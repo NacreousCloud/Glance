@@ -1390,11 +1390,12 @@ dependencies = [
 
 [[package]]
 name = "glance"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "accessibility-sys",
  "anyhow",
  "base64 0.22.1",
+ "block2 0.5.1",
  "core-foundation",
  "core-graphics 0.24.0",
  "directories",
