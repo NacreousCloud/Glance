@@ -2,7 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root { margin: 0; height: 100%; }
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  /* Default: never treat any region as a window-drag handle. macOS
+     transparent + decorations:false windows otherwise let mousedown on
+     the background initiate a window drag, which swallows the first
+     click and shows a drag preview (the "x cursor" the user reported). */
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
 
 @keyframes mn-pulse {
   0%   { transform: scale(0.6); opacity: 0.9; }

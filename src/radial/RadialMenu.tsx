@@ -55,20 +55,28 @@ export default function RadialMenu() {
       listMenuItems().then(setItems);
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
-      // Give the OS ~250ms to settle before we accept clicks. Phantom
-      // mousedowns from focus changes / hotkey release should fall in
-      // this window.
-      ignoreMouseUntil.current = Date.now() + 250;
+      // Short warm-up to absorb phantom mousedown from focus change.
+      // 80ms is enough in practice and is below human reaction time so
+      // it does not eat real user clicks.
+      ignoreMouseUntil.current = Date.now() + 80;
     });
     const escListener = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') {
         invoke('hide_radial').catch(() => {});
       }
     };
+    // Close on focus loss (clicking outside the radial window, alt-tab,
+    // Mission Control, etc.). One event per close — no polling overhead.
+    const blurListener = () => {
+      radialLog('window blur → hide');
+      invoke('hide_radial').catch(() => {});
+    };
     window.addEventListener('keydown', escListener);
+    window.addEventListener('blur', blurListener);
     return () => {
       un.then((f) => f());
       window.removeEventListener('keydown', escListener);
+      window.removeEventListener('blur', blurListener);
     };
   }, []);
 
