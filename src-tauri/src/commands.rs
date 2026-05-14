@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 #[tauri::command]
 pub fn radial_log(msg: String) {
-    tracing::info!(target: "radial_js", "{}", msg);
+    tracing::info!("[radial:js] {}", msg);
 }
 
 #[derive(serde::Serialize)]
