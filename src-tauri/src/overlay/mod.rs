@@ -116,17 +116,36 @@ pub fn spawn<R: Runtime>(
             let viewport_logical = inner
                 .map(|sz| (sz.width as f64 / placement.scale, sz.height as f64 / placement.scale))
                 .unwrap_or((placement.width / placement.scale, placement.height / placement.scale));
+            // Error events (app_id="dev.error") get a fixed red Persistent
+            // Badge regardless of the user's chosen indicator style so
+            // failures are visually distinct and the message stays on
+            // screen long enough to read.
+            let is_error = event.app_id == "dev.error";
+            let style_used = if is_error {
+                IndicatorStyle::PersistentBadge
+            } else {
+                style
+            };
+            let color_hue = if is_error {
+                0
+            } else {
+                hue_from_label(if event.app_name.is_empty() {
+                    &event.app_id
+                } else {
+                    &event.app_name
+                })
+            };
             let payload = IndicatorPayload {
                 id: event.id.clone(),
                 timestamp_ms: event.timestamp_ms,
-                style,
+                style: style_used,
                 cursor_x: local_logical.0,
                 cursor_y: local_logical.1,
                 viewport_w: viewport_logical.0,
                 viewport_h: viewport_logical.1,
                 app_name: event.app_name.clone(),
                 title: event.title.clone(),
-                color_hue: hue_from_label(if event.app_name.is_empty() { &event.app_id } else { &event.app_name }),
+                color_hue,
             };
             match app.emit("noti:show", payload) {
                 Ok(()) => tracing::info!(

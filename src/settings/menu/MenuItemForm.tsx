@@ -137,7 +137,11 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
                       className={`flex items-center gap-2 px-2 py-1 rounded text-sm text-left hover:bg-gray-100 ${
                         selected ? 'bg-blue-100 ring-2 ring-blue-400' : ''
                       }`}
-                      title={`${p.command} ${p.args.join(' ')}`}
+                      title={
+                        p.description
+                          ? `${p.command} ${p.args.join(' ')}\n\n${p.description}`
+                          : `${p.command} ${p.args.join(' ')}`
+                      }
                     >
                       <span className="text-lg">{p.icon}</span>
                       <span className="truncate">{p.label}</span>
@@ -145,6 +149,20 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
                   );
                 })}
               </div>
+              {(() => {
+                const selected = SHELL_PRESETS.find(
+                  (p) =>
+                    shell.command === p.command &&
+                    shell.args.length === p.args.length &&
+                    shell.args.every((a, i) => a === p.args[i])
+                );
+                if (!selected?.description) return null;
+                return (
+                  <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                    ⚠️ {selected.description}
+                  </p>
+                );
+              })()}
             </div>
 
             <label className="flex items-center gap-2 text-xs text-gray-500">

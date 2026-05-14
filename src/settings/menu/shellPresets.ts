@@ -48,6 +48,8 @@ export const SHELL_PRESETS: ShellPreset[] = [
       'screencapture -i ~/Desktop/Screenshot-$(date +%Y%m%d-%H%M%S).png',
     ],
     confirm: false,
+    description:
+      'Requires Screen Recording permission for mouse-noti (System Settings → Privacy & Security → Screen Recording). Without it, only the desktop wallpaper is captured — windows appear blank.',
   },
   {
     id: 'music-playpause',

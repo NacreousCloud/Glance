@@ -216,14 +216,33 @@ pub fn delete_hotkey_binding(
 pub fn exec_menu_item(
     item_id: String,
     store: tauri::State<Arc<SettingsStore>>,
+    bus: tauri::State<crate::event_bus::EventBus>,
 ) -> Result<(), String> {
     let settings = store.load();
     let item = settings
         .menu_items
         .iter()
         .find(|i| i.id == item_id)
-        .ok_or_else(|| format!("menu item not found: {item_id}"))?;
-    ActionRunner::execute(&item.action).map_err(|e| e.to_string())
+        .ok_or_else(|| format!("menu item not found: {item_id}"))?
+        .clone();
+    match ActionRunner::execute(&item.action) {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            let msg = e.to_string();
+            tracing::warn!(item_id = %item.id, error = %msg, "menu item exec failed");
+            // Publish a special error indicator so the overlay shows it at
+            // the cursor. Frontend recognises app_id="dev.error" and
+            // renders a red Persistent Badge regardless of the user's
+            // chosen style.
+            bus.publish(crate::noti::NotiEvent::now(
+                "dev.error",
+                format!("⚠ {}", item.label),
+                msg.clone(),
+                String::new(),
+            ));
+            Err(msg)
+        }
+    }
 }
 
 #[tauri::command]
