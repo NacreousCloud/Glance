@@ -35,8 +35,14 @@ export default function RadialMenu() {
   const ignoreMouseUntil = useRef(0);
 
   useEffect(() => {
+    // VISUAL DIAGNOSTIC: green tint = RadialMenu mounted + useEffect ran.
+    document.body.style.background = 'rgba(0, 255, 0, 0.35)';
+    document.documentElement.style.background = 'rgba(0, 255, 0, 0.35)';
+    document.title = `RADIAL_MOUNTED_${Date.now()}`;
+    radialLog('first useEffect entered');
     listMenuItems().then(setItems);
     const un = listen<ShowPayload>('radial:show', (e) => {
+      radialLog('radial:show event received in webview');
       listMenuItems().then(setItems);
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
