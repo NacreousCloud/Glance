@@ -1,7 +1,10 @@
 #![cfg(target_os = "macos")]
 
 use super::{NotiEvent, NotificationSource, Publisher};
-use accessibility_sys::AXIsProcessTrustedWithOptions;
+use accessibility_sys::{
+    kAXChildrenAttribute, kAXDescriptionAttribute, kAXErrorSuccess, kAXTitleAttribute,
+    AXIsProcessTrustedWithOptions, AXUIElementCopyAttributeValue, AXUIElementCreateApplication,
+};
 use core_foundation::array::{CFArray, CFArrayRef};
 use core_foundation::base::{CFType, CFTypeRef, TCFType};
 use core_foundation::dictionary::{CFDictionary, CFDictionaryRef};
@@ -158,6 +161,101 @@ unsafe fn read_u32_attr(dict: CFDictionaryRef, key: &str) -> Option<u32> {
     read_i32_attr(dict, key).map(|i| i as u32)
 }
 
+/// Walk the AX tree of `pid` (a notification host process) and return the
+/// first non-empty AXTitle / AXDescription text we find. Depth-limited;
+/// called once per banner detection.
+fn ax_extract_sender(pid: i32) -> Option<String> {
+    const MAX_DEPTH: usize = 6;
+    unsafe {
+        let app_ref = AXUIElementCreateApplication(pid);
+        if app_ref.is_null() {
+            return None;
+        }
+        let mut result: Option<String> = None;
+        descend_first_text(app_ref, &mut result, 0, MAX_DEPTH);
+        core_foundation::base::CFRelease(app_ref as _);
+        result
+    }
+}
+
+unsafe fn descend_first_text(
+    elem: accessibility_sys::AXUIElementRef,
+    out: &mut Option<String>,
+    depth: usize,
+    max_depth: usize,
+) {
+    if out.is_some() || depth > max_depth || elem.is_null() {
+        return;
+    }
+    for attr in [kAXTitleAttribute, kAXDescriptionAttribute] {
+        if let Some(s) = read_ax_string(elem, attr) {
+            if s.chars().count() >= 2 && !is_chrome(&s) {
+                *out = Some(s);
+                return;
+            }
+        }
+    }
+    let children_attr = core_foundation::string::CFString::new(kAXChildrenAttribute);
+    let mut children_value: core_foundation::base::CFTypeRef = std::ptr::null();
+    let err = AXUIElementCopyAttributeValue(
+        elem,
+        <core_foundation::string::CFString as core_foundation::base::TCFType>::as_concrete_TypeRef(&children_attr)
+            as core_foundation::string::CFStringRef,
+        &mut children_value,
+    );
+    if err == kAXErrorSuccess && !children_value.is_null() {
+        let arr: core_foundation::array::CFArray<core_foundation::base::CFType> =
+            core_foundation::array::CFArray::wrap_under_create_rule(
+                children_value as core_foundation::array::CFArrayRef,
+            );
+        for item in arr.iter() {
+            if out.is_some() {
+                break;
+            }
+            let child = item.as_CFTypeRef() as accessibility_sys::AXUIElementRef;
+            descend_first_text(child, out, depth + 1, max_depth);
+        }
+    }
+}
+
+unsafe fn read_ax_string(elem: accessibility_sys::AXUIElementRef, attr: &str) -> Option<String> {
+    let cf_attr = core_foundation::string::CFString::new(attr);
+    let mut value: core_foundation::base::CFTypeRef = std::ptr::null();
+    let err = AXUIElementCopyAttributeValue(
+        elem,
+        <core_foundation::string::CFString as core_foundation::base::TCFType>::as_concrete_TypeRef(&cf_attr)
+            as core_foundation::string::CFStringRef,
+        &mut value,
+    );
+    if err != kAXErrorSuccess || value.is_null() {
+        return None;
+    }
+    let cf_type = core_foundation::base::CFType::wrap_under_create_rule(value);
+    cf_type
+        .downcast::<core_foundation::string::CFString>()
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+}
+
+fn is_chrome(s: &str) -> bool {
+    matches!(
+        s,
+        "Notifications"
+            | "Notification Center"
+            | "Do Not Disturb"
+            | "Clear all"
+            | "Today"
+            | "Earlier"
+            | "Yesterday"
+            | "Show"
+            | "Hide"
+            | "Close"
+            | "알림 센터"
+            | "알림 지우기…"
+            | "알림 지우기"
+    )
+}
+
 impl NotificationSource for MacosNotiSource {
     fn start(&self, publish: Publisher) -> anyhow::Result<()> {
         *self.running.lock() = true;
@@ -200,19 +298,21 @@ impl NotificationSource for MacosNotiSource {
                         continue;
                     }
                     seen_numbers.insert(w.number);
-                    let label = candidates
+                    let host_label = candidates
                         .get(&w.pid)
                         .cloned()
                         .unwrap_or_else(|| w.owner_name.clone());
+                    let sender = ax_extract_sender(w.pid).unwrap_or_else(|| host_label.clone());
                     tracing::info!(
                         window_num = w.number,
                         pid = w.pid,
-                        owner = %label,
+                        host = %host_label,
+                        sender = %sender,
                         "new banner window detected"
                     );
                     (publish)(NotiEvent::now(
-                        label.clone(),
-                        label,
+                        host_label,
+                        sender,
                         String::new(),
                         String::new(),
                     ));
