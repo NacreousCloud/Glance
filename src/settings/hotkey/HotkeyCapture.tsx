@@ -86,6 +86,28 @@ export default function HotkeyCapture({ value, onChange }: Props) {
           {capturing ? 'Press combo…' : 'Capture'}
         </button>
       </div>
+      {mode === 'keyboard' && (
+        <div className="space-y-1">
+          <label className="text-xs text-gray-500">
+            Or type the accelerator manually (e.g. <code>F24</code>,{' '}
+            <code>CommandOrControl+Shift+M</code>):
+          </label>
+          <input
+            type="text"
+            className="border rounded px-2 py-1 w-full font-mono text-sm"
+            placeholder="F24"
+            value={value.kind === 'keyboard' ? value.accelerator : ''}
+            onChange={(e) =>
+              onChange({ kind: 'keyboard', accelerator: e.target.value })
+            }
+          />
+          <p className="text-xs text-gray-400">
+            F13–F24 and other special keys often aren't captured by the
+            browser; type them here. Valid modifiers: <code>CommandOrControl</code>,{' '}
+            <code>Shift</code>, <code>Alt</code>, <code>Super</code>.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
