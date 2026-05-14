@@ -100,6 +100,11 @@ impl Default for RadialTheme {
 pub struct Settings {
     pub indicator_style: IndicatorStyle,
     pub autostart: bool,
+    /// Master switch for the OS notification → cursor indicator pipeline.
+    /// When false the overlay subscriber drops incoming events (the OS
+    /// source still runs so toggling back on is instant).
+    #[serde(default = "default_true")]
+    pub indicator_enabled: bool,
     #[serde(default)]
     pub menu_items: Vec<MenuItem>,
     #[serde(default)]
@@ -118,6 +123,7 @@ impl Default for Settings {
         Self {
             indicator_style: IndicatorStyle::RingPulse,
             autostart: false,
+            indicator_enabled: true,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
@@ -184,6 +190,7 @@ mod tests {
         let s = Settings {
             indicator_style: IndicatorStyle::IconBadge,
             autostart: true,
+            indicator_enabled: true,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
@@ -202,6 +209,7 @@ mod tests {
         let good = Settings {
             indicator_style: IndicatorStyle::PersistentBadge,
             autostart: false,
+            indicator_enabled: true,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
@@ -239,6 +247,7 @@ mod tests {
             }],
             radial_close_on_leave: false,
             radial_theme: RadialTheme::default(),
+            indicator_enabled: true,
         };
         let toml = toml::to_string_pretty(&s).unwrap();
         let parsed: Settings = toml::from_str(&toml).unwrap();

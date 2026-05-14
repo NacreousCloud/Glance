@@ -225,10 +225,14 @@ pub fn run() {
 
             // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.
             let store_for_style = store.clone();
+            let store_for_enabled = store.clone();
             let bus_clone = bus.clone();
-            overlay::spawn(app.handle().clone(), bus_clone, move || {
-                store_for_style.load().indicator_style
-            });
+            overlay::spawn(
+                app.handle().clone(),
+                bus_clone,
+                move || store_for_style.load().indicator_style,
+                move || store_for_enabled.load().indicator_enabled,
+            );
 
             // Register keyboard hotkeys from settings (initial snapshot).
             {

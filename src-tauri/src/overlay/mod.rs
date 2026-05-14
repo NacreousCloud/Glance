@@ -32,6 +32,7 @@ pub fn spawn<R: Runtime>(
     app: AppHandle<R>,
     bus: EventBus,
     style_provider: impl Fn() -> IndicatorStyle + Send + 'static,
+    enabled_provider: impl Fn() -> bool + Send + 'static,
 ) {
     let mut rx = bus.subscribe();
 
@@ -63,6 +64,12 @@ pub fn spawn<R: Runtime>(
                 app = %event.app_name,
                 "overlay received event"
             );
+            // Master switch. Error events (dev.error) bypass the toggle so
+            // failures always reach the user even with the indicator off.
+            if !enabled_provider() && event.app_id != "dev.error" {
+                tracing::debug!("indicator disabled; dropping event");
+                continue;
+            }
             let style = style_provider();
             let Some(pos) = cursor::current_position() else {
                 tracing::warn!("cursor position unavailable; skipping indicator");

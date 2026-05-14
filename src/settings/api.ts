@@ -21,6 +21,7 @@ export const DEFAULT_RADIAL_THEME: RadialTheme = {
 export type Settings = {
   indicator_style: IndicatorStyle;
   autostart: boolean;
+  indicator_enabled: boolean;
   menu_items?: MenuItem[];
   hotkey_bindings?: HotkeyBinding[];
   radial_close_on_leave: boolean;

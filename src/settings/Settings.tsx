@@ -33,12 +33,28 @@ export default function Settings() {
     <div className="p-6 max-w-md mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">mouse-noti</h1>
-        <span className="text-xs text-gray-400">v0.3.5</span>
+        <span className="text-xs text-gray-400">v0.3.6</span>
       </div>
       <PermissionPanel />
       <hr className="border-gray-100" />
       <NotificationLog />
       <hr className="border-gray-100" />
+      <label className="flex items-center justify-between border rounded p-3">
+        <div>
+          <div className="font-medium">Notification indicator</div>
+          <div className="text-xs text-gray-500">
+            Master switch. Off = no overlay on system notifications (error
+            badges from menu actions still show).
+          </div>
+        </div>
+        <input
+          type="checkbox"
+          checked={state.indicator_enabled ?? true}
+          onChange={(e) =>
+            update({ ...state, indicator_enabled: e.target.checked })
+          }
+        />
+      </label>
       <StylePicker
         value={state.indicator_style}
         onChange={(s) => update({ ...state, indicator_style: s })}
