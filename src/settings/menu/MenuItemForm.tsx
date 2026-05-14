@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { MenuItem, Action } from '../../types';
 import IconPicker from './IconPicker';
-import { SHELL_PRESETS } from './shellPresets';
+import { SHELL_PRESETS, presetsForCurrentPlatform } from './shellPresets';
 
 type Props = {
   initial: MenuItem;
@@ -124,7 +124,7 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
             <div>
               <label className="text-sm font-medium">Preset</label>
               <div className="mt-1 grid grid-cols-2 gap-1 border rounded p-2 max-h-64 overflow-y-auto">
-                {SHELL_PRESETS.map((p) => {
+                {presetsForCurrentPlatform().map((p) => {
                   const selected =
                     shell.command === p.command &&
                     shell.args.length === p.args.length &&
