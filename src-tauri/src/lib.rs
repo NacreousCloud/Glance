@@ -203,6 +203,18 @@ pub fn run() {
 
             tray::install(app.handle())?;
 
+            // Intercept Settings window close → hide instead of destroy so
+            // the tray "Settings…" entry can re-show it on subsequent clicks.
+            if let Some(settings_win) = app.get_webview_window("settings") {
+                let win_clone = settings_win.clone();
+                settings_win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        let _ = win_clone.hide();
+                    }
+                });
+            }
+
             // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.
             let store_for_style = store.clone();
             let bus_clone = bus.clone();
