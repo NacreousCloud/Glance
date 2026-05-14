@@ -200,3 +200,17 @@ pub fn exec_menu_item(
 pub fn extract_app_icon(path: String) -> Result<String, String> {
     crate::app_icon::load_app_icon_base64(&path).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn debug_show_radial(
+    app: tauri::AppHandle,
+    bus: tauri::State<'_, crate::event_bus::EventBus>,
+) -> Result<(), String> {
+    crate::radial::show(&app, &bus, "all").await;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn debug_hide_radial(app: tauri::AppHandle) {
+    crate::radial::hide(&app);
+}
