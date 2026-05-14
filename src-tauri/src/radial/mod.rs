@@ -14,6 +14,7 @@ pub struct ShowPayload {
 }
 
 pub async fn show<R: Runtime>(app: &AppHandle<R>, bus: &EventBus, menu_mode: &str) {
+    tracing::info!(menu_mode, "radial::show entered");
     let Some(pos) = cursor::current_position() else {
         tracing::warn!("cursor position unavailable; skipping radial show");
         return;
@@ -22,22 +23,48 @@ pub async fn show<R: Runtime>(app: &AppHandle<R>, bus: &EventBus, menu_mode: &st
         tracing::warn!("radial window not found");
         return;
     };
+    tracing::info!(?pos, "radial::show: window found, cursor ok");
 
     let scale = win.scale_factor().unwrap_or(1.0);
     let half_w = 200.0 * scale;
     let half_h = 200.0 * scale;
-    let _ = win.set_position(tauri::PhysicalPosition::new(
+    let target_pos = tauri::PhysicalPosition::new(
         (pos.0 - half_w) as i32,
         (pos.1 - half_h) as i32,
-    ));
-    let _ = win.set_size(tauri::PhysicalSize::new(
-        (400.0 * scale) as u32,
-        (400.0 * scale) as u32,
-    ));
-    let _ = win.set_visible_on_all_workspaces(true);
-    let _ = win.set_always_on_top(true);
-    let _ = win.show();
-    let _ = win.set_focus();
+    );
+    let target_size =
+        tauri::PhysicalSize::new((400.0 * scale) as u32, (400.0 * scale) as u32);
+    tracing::info!(?target_pos, ?target_size, scale, "radial::show: positioning");
+    if let Err(e) = win.set_position(target_pos) {
+        tracing::warn!(error = %e, "set_position failed");
+    }
+    if let Err(e) = win.set_size(target_size) {
+        tracing::warn!(error = %e, "set_size failed");
+    }
+    if let Err(e) = win.set_visible_on_all_workspaces(true) {
+        tracing::warn!(error = %e, "set_visible_on_all_workspaces failed");
+    }
+    if let Err(e) = win.set_always_on_top(true) {
+        tracing::warn!(error = %e, "set_always_on_top failed");
+    }
+    match win.show() {
+        Ok(()) => tracing::info!("radial::show: win.show OK"),
+        Err(e) => tracing::warn!(error = %e, "win.show failed"),
+    }
+    match win.set_focus() {
+        Ok(()) => tracing::info!("radial::show: win.set_focus OK"),
+        Err(e) => tracing::warn!(error = %e, "win.set_focus failed"),
+    }
+
+    if let Ok(visible) = win.is_visible() {
+        tracing::info!(visible, "radial::show: post-show visibility");
+    }
+    if let Ok(inner) = win.inner_position() {
+        tracing::info!(?inner, "radial::show: inner_position after set");
+    }
+    if let Ok(inner) = win.inner_size() {
+        tracing::info!(?inner, "radial::show: inner_size after set");
+    }
 
     tokio::time::sleep(Duration::from_millis(30)).await;
 
@@ -50,7 +77,10 @@ pub async fn show<R: Runtime>(app: &AppHandle<R>, bus: &EventBus, menu_mode: &st
         menu_mode: menu_mode.to_string(),
         recent_app_name,
     };
-    let _ = app.emit("radial:show", payload);
+    match app.emit("radial:show", payload) {
+        Ok(()) => tracing::info!("radial::show: emitted radial:show event"),
+        Err(e) => tracing::warn!(error = %e, "emit radial:show failed"),
+    }
 }
 
 pub fn hide<R: Runtime>(app: &AppHandle<R>) {
