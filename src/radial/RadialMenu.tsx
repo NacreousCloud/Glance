@@ -7,9 +7,6 @@ import { listMenuItems, execMenuItem } from './api';
 import { getSettings } from '../settings/api';
 import type { MenuItem } from '../types';
 
-const radialLog = (msg: string) =>
-  invoke<void>('radial_log', { msg }).catch(() => {});
-
 const CENTER = 200;
 // Pie design: wedges reach close to the center. INNER also acts as the
 // hit-region radius for the central cancel button.
@@ -49,8 +46,6 @@ export default function RadialMenu() {
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
       // Short warm-up to absorb phantom mousedown from focus change.
-      // 80ms is enough in practice and is below human reaction time so
-      // it does not eat real user clicks.
       ignoreMouseUntil.current = Date.now() + 80;
     });
     const escListener = (ev: KeyboardEvent) => {
@@ -58,10 +53,7 @@ export default function RadialMenu() {
         invoke('hide_radial').catch(() => {});
       }
     };
-    // Close on focus loss (clicking outside the radial window, alt-tab,
-    // Mission Control, etc.). One event per close — no polling overhead.
     const blurListener = () => {
-      radialLog('window blur → hide');
       invoke('hide_radial').catch(() => {});
     };
     window.addEventListener('keydown', escListener);
@@ -81,18 +73,13 @@ export default function RadialMenu() {
     [items, menuMode]
   );
 
-  // Mirror closeOnLeave into a ref so the mouseleave listener (registered
-  // once at mount) can read the latest value without the toggle change
-  // having to re-attach listeners. This also avoids a race where the
-  // user moves the cursor out of the window before the initial
-  // getSettings() promise resolves.
+  // Mirror closeOnLeave into a ref so the always-attached mouseleave
+  // listener reads the latest value without re-attachment.
   const closeOnLeaveRef = useRef(false);
   useEffect(() => {
     closeOnLeaveRef.current = closeOnLeave;
   }, [closeOnLeave]);
 
-  // Optional close-on-leave. Listeners always installed; the ref-gated
-  // check in the handler decides whether to actually hide.
   useEffect(() => {
     const maybeHide = () => {
       if (!closeOnLeaveRef.current) return;
@@ -114,41 +101,26 @@ export default function RadialMenu() {
     };
   }, []);
 
-  // Window-level mousedown handler. SVG onClick was not firing reliably
+  // Window-level mousedown handler. SVG onClick does not fire reliably
   // through Tauri's transparent macOS window, so we listen at the document
   // level instead. Computes the sector from raw clientX/Y at click time.
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
-      radialLog(`mousedown clientX=${e.clientX} clientY=${e.clientY} button=${e.button}`);
-      if (Date.now() < ignoreMouseUntil.current) {
-        radialLog('mousedown ignored (warm-up)');
-        return;
-      }
+      if (Date.now() < ignoreMouseUntil.current) return;
       const dx = e.clientX - CENTER;
       const dy = e.clientY - CENTER;
       const r = Math.sqrt(dx * dx + dy * dy);
       const sector = sectorAt(dx, dy, filtered.length, INNER, OUTER);
-      radialLog(
-        `mousedown decision r=${r.toFixed(1)} sector=${sector} items=${filtered.length}`
-      );
       if (r < INNER || sector === null) {
-        radialLog('mousedown → hide (center or outside)');
         invoke('hide_radial').catch(() => {});
         return;
       }
       const item = filtered[sector];
-      if (item) {
-        radialLog(`mousedown → exec item ${item.id}`);
-        execMenuItem(item.id);
-      }
+      if (item) execMenuItem(item.id);
       invoke('hide_radial').catch(() => {});
     };
-    radialLog('mousedown listener installed');
     window.addEventListener('mousedown', onMouseDown);
-    return () => {
-      radialLog('mousedown listener removed');
-      window.removeEventListener('mousedown', onMouseDown);
-    };
+    return () => window.removeEventListener('mousedown', onMouseDown);
   }, [filtered]);
 
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -160,9 +132,6 @@ export default function RadialMenu() {
     setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
   };
 
-  // (Click handling moved to a window-level mousedown listener in useEffect
-  // above so it works through Tauri's transparent macOS window.)
-
   return (
     <svg
       viewBox={`0 0 ${CENTER * 2} ${CENTER * 2}`}
@@ -171,11 +140,10 @@ export default function RadialMenu() {
       onMouseMove={onMouseMove}
       style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
-      {/* Semi-opaque backdrop. macOS transparent windows pass clicks through
-          on alpha=0 areas, so a barely-visible alpha (e.g. 0.001) is still
-          treated as transparent and clicks never reach onClick. A modest
-          dim (0.15) gives a modal feel AND reliably captures clicks in
-          the 4 corners outside the pie. */}
+      {/* Semi-opaque backdrop. macOS transparent windows pass clicks
+          through on alpha=0 areas, so a slight dim both gives a modal
+          feel and ensures clicks in the 4 corners outside the pie are
+          captured by the webview. */}
       <rect
         x={0}
         y={0}

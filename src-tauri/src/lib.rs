@@ -116,12 +116,9 @@ pub fn run() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
-                    let key = hotkey::keyboard::shortcut_key(shortcut);
-                    tracing::debug!(state = ?event.state(), key = %key, "global-shortcut event");
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
-                    // Preserved: Ctrl+Shift+D fires a debug noti.
                     if shortcut == &debug_shortcut {
                         let bus = app.state::<EventBus>();
                         bus.publish(NotiEvent::now(
@@ -132,19 +129,15 @@ pub fn run() {
                         ));
                         return;
                     }
-                    // Route to a TriggerEvent if matches a user binding.
+                    let key = hotkey::keyboard::shortcut_key(shortcut);
                     let lookup = registry_for_handler.lock().get(&key).cloned();
-                    match lookup {
-                        Some((binding_id, menu_mode)) => {
-                            tracing::info!(%binding_id, %menu_mode, key = %key, "shortcut matched binding");
-                            let _ = tx_for_handler.send(hotkey::TriggerEvent {
-                                binding_id,
-                                menu_mode,
-                            });
-                        }
-                        None => {
-                            tracing::warn!(key = %key, "shortcut pressed but no binding in registry");
-                        }
+                    if let Some((binding_id, menu_mode)) = lookup {
+                        let _ = tx_for_handler.send(hotkey::TriggerEvent {
+                            binding_id,
+                            menu_mode,
+                        });
+                    } else {
+                        tracing::debug!(key = %key, "shortcut pressed but not in registry");
                     }
                 })
                 .build(),
@@ -205,13 +198,10 @@ pub fn run() {
             }
         })
         .setup(move |app| {
-            tracing::info!("setup: begin");
             let ctrl_shift_d = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
             app.global_shortcut().register(ctrl_shift_d)?;
-            tracing::info!("setup: ctrl+shift+d registered");
 
             tray::install(app.handle())?;
-            tracing::info!("setup: tray installed");
 
             // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.
             let store_for_style = store.clone();
@@ -219,7 +209,6 @@ pub fn run() {
             overlay::spawn(app.handle().clone(), bus_clone, move || {
                 store_for_style.load().indicator_style
             });
-            tracing::info!("setup: overlay spawned");
 
             // Register keyboard hotkeys from settings (initial snapshot).
             {
@@ -230,18 +219,16 @@ pub fn run() {
                     tracing::warn!(binding_id = %id, error = %err, "failed to register keyboard hotkey");
                 }
             }
-            tracing::info!("setup: keyboard hotkeys registered");
 
             // Drain hotkey trigger events; show radial on each.
             let app_handle = app.handle().clone();
             let bus_for_hotkey = bus.clone();
             tauri::async_runtime::spawn(async move {
                 while let Some(event) = hotkey_rx.recv().await {
-                    tracing::info!(?event, "hotkey fired");
+                    tracing::debug!(?event, "hotkey fired");
                     crate::radial::show(&app_handle, &bus_for_hotkey, &event.menu_mode).await;
                 }
             });
-            tracing::info!("setup: hotkey drainer spawned");
 
             // Drain rebind signals; unregister + re-register keyboard hotkeys
             // from the latest shared_bindings snapshot.
@@ -263,21 +250,16 @@ pub fn run() {
                     for (id, err) in &failures {
                         tracing::warn!(binding_id = %id, error = %err, "rebind failed");
                     }
-                    tracing::info!("hotkey bindings re-registered");
                 }
             });
-            tracing::info!("setup: rebind drainer spawned");
 
             start_os_source(app.handle(), &bus);
-            tracing::info!("setup: noti source started");
 
             // Mouse hotkey listener is disabled on macOS — rdev triggers a
             // TSMGetInputSourceProperty main-thread assertion inside its
             // keyboard conversion path on macOS 15+. Track follow-up with
             // NSEvent.addGlobalMonitorForEventsMatchingMask. Mouse bindings
             // saved in settings are preserved but never fire.
-
-            tracing::info!("setup: done");
             Ok(())
         })
         .run(tauri::generate_context!())
