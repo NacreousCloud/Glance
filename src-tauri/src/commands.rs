@@ -7,6 +7,21 @@ pub fn radial_log(msg: String) {
     tracing::info!("[radial:js] {}", msg);
 }
 
+#[tauri::command]
+pub fn hide_radial(app: tauri::AppHandle) {
+    if let Some(win) = app.get_webview_window("radial") {
+        match win.hide() {
+            Ok(()) => tracing::info!("hide_radial: win.hide ok"),
+            Err(e) => tracing::warn!(error = %e, "hide_radial: win.hide failed"),
+        }
+        if let Ok(visible) = win.is_visible() {
+            tracing::info!(visible, "hide_radial: post-hide visibility");
+        }
+    } else {
+        tracing::warn!("hide_radial: radial window not found");
+    }
+}
+
 #[derive(serde::Serialize)]
 pub struct PermissionStatus {
     pub accessibility_ok: bool,

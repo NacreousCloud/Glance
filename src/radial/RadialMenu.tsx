@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { sectorAt } from './geometry';
 import Sector from './Sector';
 import { listMenuItems, execMenuItem } from './api';
@@ -63,7 +62,7 @@ export default function RadialMenu() {
     });
     const escListener = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') {
-        getCurrentWebviewWindow().hide();
+        invoke('hide_radial').catch(() => {});
       }
     };
     window.addEventListener('keydown', escListener);
@@ -100,7 +99,7 @@ export default function RadialMenu() {
       );
       if (r < INNER || sector === null) {
         radialLog('mousedown → hide (center or outside)');
-        getCurrentWebviewWindow().hide();
+        invoke('hide_radial').catch(() => {});
         return;
       }
       const item = filtered[sector];
@@ -108,7 +107,7 @@ export default function RadialMenu() {
         radialLog(`mousedown → exec item ${item.id}`);
         execMenuItem(item.id);
       }
-      getCurrentWebviewWindow().hide();
+      invoke('hide_radial').catch(() => {});
     };
     radialLog('mousedown listener installed');
     window.addEventListener('mousedown', onMouseDown);
