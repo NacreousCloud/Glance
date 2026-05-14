@@ -45,23 +45,46 @@ export default function Sector({
   const iconY = Math.sin(iconAngle) * iconR;
 
   return (
-    <g>
+    <g style={{ transition: 'opacity 80ms ease-out' }}>
       <path
         d={path}
-        fill={hovered ? 'rgba(96,165,250,0.85)' : 'rgba(31,41,55,0.85)'}
-        stroke="rgba(255,255,255,0.2)"
-        strokeWidth={1}
+        fill={hovered ? 'rgba(59,130,246,0.95)' : 'rgba(31,41,55,0.85)'}
+        stroke={hovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'}
+        strokeWidth={hovered ? 2 : 1}
       />
       <foreignObject x={iconX - 20} y={iconY - 20} width={40} height={40} pointerEvents="none">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 40, height: 40, fontSize: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            fontSize: hovered ? 28 : 24,
+            transition: 'font-size 80ms ease-out',
+          }}
+        >
           {item.icon.kind === 'emoji' ? (
             <span>{item.icon.value}</span>
           ) : (
-            <img src={`data:image/png;base64,${item.icon.base64}`} width={32} height={32} alt="" />
+            <img
+              src={`data:image/png;base64,${item.icon.base64}`}
+              width={hovered ? 36 : 32}
+              height={hovered ? 36 : 32}
+              alt=""
+            />
           )}
         </div>
       </foreignObject>
-      <text x={iconX} y={iconY + 28} textAnchor="middle" fill="white" fontSize={10} pointerEvents="none">
+      <text
+        x={iconX}
+        y={iconY + 28}
+        textAnchor="middle"
+        fill="white"
+        fontSize={hovered ? 12 : 10}
+        fontWeight={hovered ? 700 : 400}
+        pointerEvents="none"
+      >
         {item.label}
       </text>
     </g>

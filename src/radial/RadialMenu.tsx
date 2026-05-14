@@ -101,9 +101,9 @@ export default function RadialMenu() {
     };
   }, []);
 
-  // Window-level mousedown handler. SVG onClick does not fire reliably
+  // Window-level mousedown + mousemove. SVG events do not fire reliably
   // through Tauri's transparent macOS window, so we listen at the document
-  // level instead. Computes the sector from raw clientX/Y at click time.
+  // level instead and compute the sector from raw clientX/Y.
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
       if (Date.now() < ignoreMouseUntil.current) return;
@@ -119,25 +119,26 @@ export default function RadialMenu() {
       if (item) execMenuItem(item.id);
       invoke('hide_radial').catch(() => {});
     };
+    const onMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - CENTER;
+      const dy = e.clientY - CENTER;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      setCenterHovered(r < INNER);
+      setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
+    };
     window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+    };
   }, [filtered]);
-
-  const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const dx = e.clientX - rect.left - CENTER;
-    const dy = e.clientY - rect.top - CENTER;
-    const r = Math.sqrt(dx * dx + dy * dy);
-    setCenterHovered(r < INNER);
-    setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
-  };
 
   return (
     <svg
       viewBox={`0 0 ${CENTER * 2} ${CENTER * 2}`}
       width={CENTER * 2}
       height={CENTER * 2}
-      onMouseMove={onMouseMove}
       style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
       {/* Semi-opaque backdrop. macOS transparent windows pass clicks
