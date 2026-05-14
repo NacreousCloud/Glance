@@ -94,9 +94,9 @@ unsafe extern "system" fn mouse_proc(n_code: i32, w_param: WPARAM, l_param: LPAR
             // mouseData high-order word is XBUTTON1 (back, 4) or XBUTTON2 (forward, 5).
             let info = &*(l_param.0 as *const MSLLHOOKSTRUCT);
             let xbtn = (info.mouseData >> 16) as u16;
-            if xbtn == XBUTTON1.0 {
+            if xbtn == XBUTTON1 {
                 dispatch(4);
-            } else if xbtn == XBUTTON2.0 {
+            } else if xbtn == XBUTTON2 {
                 dispatch(5);
             }
         }
