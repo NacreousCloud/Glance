@@ -62,14 +62,23 @@ export default function RadialMenu() {
     setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
   };
 
-  const onClick = () => {
-    // Center circle or outside the pie → close without executing.
-    if (centerHovered || hovered === null) {
+  const onClick = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const dx = e.clientX - rect.left - CENTER;
+    const dy = e.clientY - rect.top - CENTER;
+    const r = Math.sqrt(dx * dx + dy * dy);
+    const sector = sectorAt(dx, dy, filtered.length, INNER, OUTER);
+    console.debug('[radial] click', { dx, dy, r, sector, centerHovered, hovered });
+    // Center circle (r < INNER) or outside the pie (r > OUTER) → close.
+    if (r < INNER || sector === null) {
       getCurrentWebviewWindow().hide();
       return;
     }
-    const item = filtered[hovered];
-    if (!item) return;
+    const item = filtered[sector];
+    if (!item) {
+      getCurrentWebviewWindow().hide();
+      return;
+    }
     execMenuItem(item.id);
     getCurrentWebviewWindow().hide();
   };
@@ -81,8 +90,19 @@ export default function RadialMenu() {
       height={CENTER * 2}
       onMouseMove={onMouseMove}
       onClick={onClick}
-      style={{ position: 'fixed', top: 0, left: 0 }}
+      style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
+      {/* Transparent click-capture background so clicks outside the pie
+          still trigger onClick. Without this, SVG only fires on rendered
+          shapes (the wedges + center disc), and clicks in the 4 corners
+          of the 400x400 window do nothing. */}
+      <rect
+        x={0}
+        y={0}
+        width={CENTER * 2}
+        height={CENTER * 2}
+        fill="rgba(0,0,0,0.001)"
+      />
       <g transform={`translate(${CENTER} ${CENTER})`}>
         {filtered.map((item, i) => (
           <Sector
