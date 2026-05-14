@@ -50,3 +50,43 @@ For each of `ring_pulse`, `icon_badge`, `persistent_badge`:
 ## Persistence
 - [ ] Change style → quit app → relaunch → style preserved
 - [ ] Corrupt config.toml manually → relaunch → defaults loaded, `.bak` recovered
+
+## Radial menu (v0.3.0)
+
+### Menu items
+- [ ] Settings → Menu items → `+ Add item` → save 3 items: Slack (launch_app, `/Applications/Slack.app`, emoji 💬), GitHub (open_url, `https://github.com`, emoji 🐙), echo (run_shell, `/bin/echo`, args `hello`, confirm=true)
+- [ ] App icon extraction: edit Slack item → `Use app icon` button → icon swaps from emoji to real Slack app icon
+- [ ] Reorder via ↑/↓ → order persists across restart
+- [ ] Delete an item → removed from list
+
+### Hotkey bindings
+- [ ] Settings → Hotkey bindings → `+ Add binding`
+- [ ] Keyboard capture: `Capture` button → press `Cmd+Shift+M` → accelerator string updates
+- [ ] Mouse capture: switch to `Mouse` tab → `Capture` → hold `Cmd` and click mouse button 4 (back) → `button=4 mods=1`
+- [ ] Save binding → fires WITHOUT app restart (live re-registration)
+
+### Radial trigger
+- [ ] Press the keyboard binding → radial menu appears at cursor position
+- [ ] Press the mouse binding → radial appears
+- [ ] Hover a sector → highlights
+- [ ] Click Slack sector → Slack opens, menu closes
+- [ ] Re-trigger → click GitHub sector → browser opens
+- [ ] Re-trigger → click echo sector → confirm dialog appears (TODO if not yet implemented) → confirm → command runs
+- [ ] ESC during menu → menu closes without executing
+- [ ] Click outside the donut ring → menu closes without executing
+
+### Context-aware mode
+- [ ] Add a binding with `menu_mode = notification`
+- [ ] Tag one menu item with `notification` only (uncheck `launcher`)
+- [ ] Trigger an OS notification (Teams/KakaoTalk)
+- [ ] Within 5s, press the notification-mode binding → menu shows ONLY notification-tagged items + sender name in center
+- [ ] Press the same binding 10s later (after recent_within window expires) → sender label disappears
+
+### Variable sector count
+- [ ] Add a 4th menu item → re-trigger → menu now has 4 sectors
+- [ ] Add up to 12 items → all visible as sectors
+- [ ] Delete down to 1 item → single sector renders as full donut
+
+### Persistence
+- [ ] Menu items + hotkey bindings survive app restart
+- [ ] Legacy v0.2.x config (no menu_items / hotkey_bindings fields) loads without error

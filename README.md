@@ -122,13 +122,40 @@ pnpm tauri build --debug      # 디버그 심볼 포함 빌드
 
 설정창의 **Launch at login** 체크박스. macOS는 LaunchAgent, Windows는 레지스트리 항목 자동 등록.
 
+### 라디얼 퀵메뉴 (v0.3.0)
+
+마우스 커서 중심에 등장하는 부채꼴 메뉴. 사용자가 등록한 단축키(키보드 조합 또는 마우스 버튼)로 호출. 각 섹터를 호버 → 클릭하면 액션 실행.
+
+**액션 종류**:
+- `launch_app` — 지정한 `.app` 번들 실행 (macOS `open` 사용)
+- `open_url` — 기본 브라우저로 URL 열기
+- `run_shell` — 셸 명령 실행. 아이템별 `confirm` 옵션 (기본: true) → 실행 전 확인 다이얼로그.
+
+**아이콘**: 이모지 직접 입력 또는 (launch_app 액션 한정) `Use app icon` 버튼으로 시스템 앱 아이콘 추출 → base64 PNG로 저장.
+
+**단축키 등록** (Settings → Hotkey bindings → `+ Add binding`):
+- **Keyboard**: `Capture` 버튼 클릭 후 원하는 키 조합 누름 (예: `Cmd+Shift+M`, `F13`)
+- **Mouse**: `Mouse` 탭 선택 → `Capture` 후 수식키 누른 채로 마우스 버튼 클릭 (예: `Cmd+마우스 4번`)
+- **menu_mode** 선택:
+  - `all` — 모든 메뉴 아이템 표시
+  - `launcher` — `launcher` 태그가 있는 아이템만
+  - `notification` — `notification` 태그가 있는 아이템만, 라디얼 중앙에 최근 5초 내 발생한 알림의 sender 이름 표시
+
+**섹터 수**: 아이템 수에 따라 자동 (1~12개). 메뉴 아이템이 비어있으면 도넛만 표시되고 클릭 시 닫힘.
+
+**ESC** 또는 메뉴 영역 밖 클릭으로 취소.
+
+설정창 → Menu items → `+ Add item`으로 아이템 추가. Edit/Delete/↑↓로 관리.
+
+**보안 주의**: `run_shell` 액션은 mouse-noti 프로세스의 권한으로 실행됨. `confirm` 옵션을 켜둘 것을 권장.
+
 ---
 
 ## 테스트
 
 ```bash
-pnpm test:run                                          # 프론트엔드 (Vitest, 6 tests)
-cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛 (10 tests)
+pnpm test:run                                          # 프론트엔드 (Vitest, 10 tests)
+cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛 (22 tests)
 ```
 
 매뉴얼 QA 체크리스트: `docs/superpowers/checklists/mvp-manual-qa.md`
