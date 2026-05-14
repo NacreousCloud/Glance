@@ -115,6 +115,8 @@ pub fn run() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(move |app, shortcut, event| {
+                    let key = hotkey::keyboard::shortcut_key(shortcut);
+                    tracing::debug!(state = ?event.state(), key = %key, "global-shortcut event");
                     if event.state() != ShortcutState::Pressed {
                         return;
                     }
@@ -130,14 +132,18 @@ pub fn run() {
                         return;
                     }
                     // Route to a TriggerEvent if matches a user binding.
-                    let key = hotkey::keyboard::shortcut_key(shortcut);
-                    if let Some((binding_id, menu_mode)) =
-                        registry_for_handler.lock().get(&key).cloned()
-                    {
-                        let _ = tx_for_handler.send(hotkey::TriggerEvent {
-                            binding_id,
-                            menu_mode,
-                        });
+                    let lookup = registry_for_handler.lock().get(&key).cloned();
+                    match lookup {
+                        Some((binding_id, menu_mode)) => {
+                            tracing::info!(%binding_id, %menu_mode, key = %key, "shortcut matched binding");
+                            let _ = tx_for_handler.send(hotkey::TriggerEvent {
+                                binding_id,
+                                menu_mode,
+                            });
+                        }
+                        None => {
+                            tracing::warn!(key = %key, "shortcut pressed but no binding in registry");
+                        }
                     }
                 })
                 .build(),

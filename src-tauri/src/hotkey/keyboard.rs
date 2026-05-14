@@ -24,18 +24,26 @@ pub fn register_all<R: Runtime>(
     reg.clear();
     for binding in bindings {
         if let HotkeyTrigger::Keyboard { accelerator } = &binding.trigger {
+            tracing::info!(binding_id = %binding.id, accelerator = %accelerator, "parsing keyboard binding");
             match accelerator.parse::<Shortcut>() {
                 Ok(sc) => {
+                    let key = shortcut_key(&sc);
+                    tracing::info!(binding_id = %binding.id, ?sc, key = %key, "registering shortcut");
                     if let Err(e) = shortcut_ext.register(sc) {
+                        tracing::warn!(binding_id = %binding.id, error = %e, "register failed");
                         failures.push((binding.id.clone(), e.to_string()));
                     } else {
                         reg.insert(
-                            shortcut_key(&sc),
+                            key,
                             (binding.id.clone(), binding.menu_mode.clone()),
                         );
+                        tracing::info!(binding_id = %binding.id, "registered ok");
                     }
                 }
-                Err(e) => failures.push((binding.id.clone(), e.to_string())),
+                Err(e) => {
+                    tracing::warn!(binding_id = %binding.id, accelerator = %accelerator, error = %e, "parse failed");
+                    failures.push((binding.id.clone(), e.to_string()));
+                }
             }
         }
     }
