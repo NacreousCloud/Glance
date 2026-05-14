@@ -81,6 +81,14 @@ pub fn run() {
         )
         .try_init();
 
+    // Surface any thread panic to stderr + tracing so silent exits become visible.
+    std::panic::set_hook(Box::new(|info| {
+        let thread = std::thread::current();
+        let tname = thread.name().unwrap_or("<unnamed>");
+        eprintln!("[PANIC] thread={tname} info={info}");
+        tracing::error!(thread = %tname, %info, "panic in thread");
+    }));
+
     let bus = EventBus::new();
     let store = Arc::new(SettingsStore::new(default_config_path()));
     let active_source = ActiveSource(Arc::new(Mutex::new(None)));
@@ -186,10 +194,13 @@ pub fn run() {
             }
         })
         .setup(move |app| {
+            tracing::info!("setup: begin");
             let ctrl_shift_d = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
             app.global_shortcut().register(ctrl_shift_d)?;
+            tracing::info!("setup: ctrl+shift+d registered");
 
             tray::install(app.handle())?;
+            tracing::info!("setup: tray installed");
 
             // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.
             let store_for_style = store.clone();
@@ -197,6 +208,7 @@ pub fn run() {
             overlay::spawn(app.handle().clone(), bus_clone, move || {
                 store_for_style.load().indicator_style
             });
+            tracing::info!("setup: overlay spawned");
 
             // Register keyboard hotkeys from settings (initial snapshot).
             {
@@ -207,10 +219,7 @@ pub fn run() {
                     tracing::warn!(binding_id = %id, error = %err, "failed to register keyboard hotkey");
                 }
             }
-
-            // Mouse listener — shares `shared_bindings` so live CRUD takes
-            // effect on next press (no rebind signal required for mouse).
-            hotkey::mouse::spawn_listener(shared_bindings.clone(), hotkey_tx.clone());
+            tracing::info!("setup: keyboard hotkeys registered");
 
             // Drain hotkey trigger events; show radial on each.
             let app_handle = app.handle().clone();
@@ -221,6 +230,7 @@ pub fn run() {
                     crate::radial::show(&app_handle, &bus_for_hotkey, &event.menu_mode).await;
                 }
             });
+            tracing::info!("setup: hotkey drainer spawned");
 
             // Drain rebind signals; unregister + re-register keyboard hotkeys
             // from the latest shared_bindings snapshot.
@@ -245,8 +255,19 @@ pub fn run() {
                     tracing::info!("hotkey bindings re-registered");
                 }
             });
+            tracing::info!("setup: rebind drainer spawned");
 
             start_os_source(app.handle(), &bus);
+            tracing::info!("setup: noti source started");
+
+            // Mouse listener — spawned LAST. rdev::listen on macOS may interact
+            // poorly with NSApplication init when started too early in setup.
+            // Defer until the rest of the app is wired so any failure surfaces
+            // distinctly after all other init logs.
+            hotkey::mouse::spawn_listener(shared_bindings.clone(), hotkey_tx.clone());
+            tracing::info!("setup: mouse listener spawned");
+
+            tracing::info!("setup: done");
             Ok(())
         })
         .run(tauri::generate_context!())
