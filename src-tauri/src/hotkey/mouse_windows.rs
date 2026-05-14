@@ -149,7 +149,7 @@ impl MouseMonitor {
                 // Process-lifetime: in practice the loop only exits at
                 // process shutdown. The hook is also cleaned up by the
                 // OS when the owning process dies.
-                drop(hook);
+                let _ = hook;
             })
             .expect("spawn mouse hook thread");
         Self
