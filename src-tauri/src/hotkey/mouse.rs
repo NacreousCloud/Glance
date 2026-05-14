@@ -1,5 +1,5 @@
 use crate::hotkey::TriggerEvent;
-use crate::settings::{HotkeyBinding, HotkeyTrigger};
+use crate::settings::HotkeyTrigger;
 use parking_lot::Mutex;
 use rdev::{listen, Button, Event, EventType};
 use std::sync::Arc;
@@ -48,7 +48,7 @@ fn update_mod(m: &mut ModState, k: rdev::Key, pressed: bool) {
 /// `bindings` is shared so Task 13 (live rebind) can mutate it without
 /// restarting the listener thread.
 pub fn spawn_listener(
-    bindings: Arc<Mutex<Vec<HotkeyBinding>>>,
+    bindings: super::SharedBindings,
     tx: tokio::sync::mpsc::UnboundedSender<TriggerEvent>,
 ) {
     std::thread::spawn(move || {

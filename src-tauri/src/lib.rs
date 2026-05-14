@@ -92,6 +92,14 @@ pub fn run() {
     let (hotkey_tx, mut hotkey_rx) =
         tokio::sync::mpsc::unbounded_channel::<hotkey::TriggerEvent>();
 
+    // Shared, mutable hotkey bindings — both keyboard registry rebinder and
+    // mouse listener read from the same Arc<Mutex<...>>.
+    let shared_bindings: hotkey::SharedBindings =
+        Arc::new(Mutex::new(store.load().hotkey_bindings.clone()));
+    // Rebind notifier: CRUD commands signal here; drainer in setup re-registers.
+    let (rebind_tx, mut rebind_rx) =
+        tokio::sync::mpsc::unbounded_channel::<()>();
+
     let registry_for_handler = hotkey_registry.clone();
     let tx_for_handler = hotkey_tx.clone();
 
@@ -134,6 +142,8 @@ pub fn run() {
         .manage(bus.clone())
         .manage(store.clone())
         .manage(active_source)
+        .manage(shared_bindings.clone())
+        .manage(rebind_tx.clone())
         .invoke_handler({
             #[cfg(feature = "mock-os")]
             {
@@ -188,17 +198,19 @@ pub fn run() {
                 store_for_style.load().indicator_style
             });
 
-            // Register keyboard hotkeys from settings.
-            let bindings = store.load().hotkey_bindings.clone();
-            let failures =
-                hotkey::keyboard::register_all(app.handle(), &bindings, &hotkey_registry);
-            for (id, err) in &failures {
-                tracing::warn!(binding_id = %id, error = %err, "failed to register keyboard hotkey");
+            // Register keyboard hotkeys from settings (initial snapshot).
+            {
+                let initial = shared_bindings.lock().clone();
+                let failures =
+                    hotkey::keyboard::register_all(app.handle(), &initial, &hotkey_registry);
+                for (id, err) in &failures {
+                    tracing::warn!(binding_id = %id, error = %err, "failed to register keyboard hotkey");
+                }
             }
 
-            // Mouse listener — runs on a dedicated OS thread.
-            let mouse_bindings = Arc::new(Mutex::new(bindings.clone()));
-            hotkey::mouse::spawn_listener(mouse_bindings.clone(), hotkey_tx.clone());
+            // Mouse listener — shares `shared_bindings` so live CRUD takes
+            // effect on next press (no rebind signal required for mouse).
+            hotkey::mouse::spawn_listener(shared_bindings.clone(), hotkey_tx.clone());
 
             // Drain hotkey trigger events; show radial on each.
             let app_handle = app.handle().clone();
@@ -207,6 +219,30 @@ pub fn run() {
                 while let Some(event) = hotkey_rx.recv().await {
                     tracing::info!(?event, "hotkey fired");
                     crate::radial::show(&app_handle, &bus_for_hotkey, &event.menu_mode).await;
+                }
+            });
+
+            // Drain rebind signals; unregister + re-register keyboard hotkeys
+            // from the latest shared_bindings snapshot.
+            let app_handle_for_rebind = app.handle().clone();
+            let registry_for_rebind = hotkey_registry.clone();
+            let bindings_for_rebind = shared_bindings.clone();
+            tauri::async_runtime::spawn(async move {
+                while rebind_rx.recv().await.is_some() {
+                    hotkey::keyboard::unregister_all(
+                        &app_handle_for_rebind,
+                        &registry_for_rebind,
+                    );
+                    let current = bindings_for_rebind.lock().clone();
+                    let failures = hotkey::keyboard::register_all(
+                        &app_handle_for_rebind,
+                        &current,
+                        &registry_for_rebind,
+                    );
+                    for (id, err) in &failures {
+                        tracing::warn!(binding_id = %id, error = %err, "rebind failed");
+                    }
+                    tracing::info!("hotkey bindings re-registered");
                 }
             });
 

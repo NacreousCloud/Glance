@@ -158,6 +158,8 @@ pub fn list_hotkey_bindings(store: tauri::State<Arc<SettingsStore>>) -> Vec<Hotk
 pub fn upsert_hotkey_binding(
     binding: HotkeyBinding,
     store: tauri::State<Arc<SettingsStore>>,
+    shared: tauri::State<crate::hotkey::SharedBindings>,
+    rebind_tx: tauri::State<tokio::sync::mpsc::UnboundedSender<()>>,
 ) -> Result<(), String> {
     let mut settings = store.load();
     if let Some(existing) = settings
@@ -169,17 +171,27 @@ pub fn upsert_hotkey_binding(
     } else {
         settings.hotkey_bindings.push(binding);
     }
-    store.save(&settings).map_err(|e| e.to_string())
+    store.save(&settings).map_err(|e| e.to_string())?;
+    // Mirror to shared state so mouse listener sees it immediately,
+    // then signal the rebind drainer to re-register keyboard hotkeys.
+    *shared.lock() = settings.hotkey_bindings.clone();
+    let _ = rebind_tx.send(());
+    Ok(())
 }
 
 #[tauri::command]
 pub fn delete_hotkey_binding(
     binding_id: String,
     store: tauri::State<Arc<SettingsStore>>,
+    shared: tauri::State<crate::hotkey::SharedBindings>,
+    rebind_tx: tauri::State<tokio::sync::mpsc::UnboundedSender<()>>,
 ) -> Result<(), String> {
     let mut settings = store.load();
     settings.hotkey_bindings.retain(|b| b.id != binding_id);
-    store.save(&settings).map_err(|e| e.to_string())
+    store.save(&settings).map_err(|e| e.to_string())?;
+    *shared.lock() = settings.hotkey_bindings.clone();
+    let _ = rebind_tx.send(());
+    Ok(())
 }
 
 #[tauri::command]
