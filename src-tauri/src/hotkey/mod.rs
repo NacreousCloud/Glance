@@ -1,4 +1,5 @@
 pub mod keyboard;
+pub mod mouse;
 
 #[derive(Debug, Clone)]
 pub struct TriggerEvent {

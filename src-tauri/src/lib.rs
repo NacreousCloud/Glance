@@ -201,6 +201,10 @@ pub fn run() {
                 tracing::warn!(binding_id = %id, error = %err, "failed to register keyboard hotkey");
             }
 
+            // Mouse listener — runs on a dedicated OS thread.
+            let mouse_bindings = Arc::new(Mutex::new(bindings.clone()));
+            hotkey::mouse::spawn_listener(mouse_bindings.clone(), hotkey_tx.clone());
+
             // Drain hotkey trigger events; show radial on each.
             let app_handle = app.handle().clone();
             let bus_for_hotkey = bus.clone();
