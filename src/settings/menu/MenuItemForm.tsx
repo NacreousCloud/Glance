@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { MenuItem, Action } from '../../types';
 import IconPicker from './IconPicker';
+import { SHELL_PRESETS } from './shellPresets';
 
 type Props = {
   initial: MenuItem;
@@ -11,10 +12,34 @@ type Props = {
 
 export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
   const [item, setItem] = useState<MenuItem>(initial);
+  const [shellAdvanced, setShellAdvanced] = useState(false);
   const appPath =
     item.action.kind === 'launch_app' ? item.action.path : undefined;
 
   const updateAction = (a: Action) => setItem({ ...item, action: a });
+
+  const applyShellPreset = (presetId: string) => {
+    const p = SHELL_PRESETS.find((x) => x.id === presetId);
+    if (!p) return;
+    setItem((prev) => ({
+      ...prev,
+      // Auto-fill label + icon from preset if they look default.
+      label:
+        prev.label.trim() && prev.label.trim() !== 'New item'
+          ? prev.label
+          : p.label,
+      icon:
+        prev.icon.kind === 'emoji' && (prev.icon.value === '⚡' || prev.icon.value === '')
+          ? { kind: 'emoji', value: p.icon }
+          : prev.icon,
+      action: {
+        kind: 'run_shell',
+        command: p.command,
+        args: p.args,
+        confirm: p.confirm,
+      },
+    }));
+  };
 
   return (
     <div className="space-y-3 border p-4 rounded">
@@ -95,28 +120,73 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
       {item.action.kind === 'run_shell' && (() => {
         const shell = item.action;
         return (
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="/usr/local/bin/foo"
-              className="border rounded px-2 py-1 w-full"
-              value={shell.command}
-              onChange={(e) =>
-                updateAction({ ...shell, command: e.target.value })
-              }
-            />
-            <input
-              type="text"
-              placeholder="args (space-separated)"
-              className="border rounded px-2 py-1 w-full"
-              value={shell.args.join(' ')}
-              onChange={(e) =>
-                updateAction({
-                  ...shell,
-                  args: e.target.value.split(/\s+/).filter((a) => a.length > 0),
-                })
-              }
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Preset</label>
+              <div className="mt-1 grid grid-cols-2 gap-1 border rounded p-2 max-h-64 overflow-y-auto">
+                {SHELL_PRESETS.map((p) => {
+                  const selected =
+                    shell.command === p.command &&
+                    shell.args.length === p.args.length &&
+                    shell.args.every((a, i) => a === p.args[i]);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => applyShellPreset(p.id)}
+                      className={`flex items-center gap-2 px-2 py-1 rounded text-sm text-left hover:bg-gray-100 ${
+                        selected ? 'bg-blue-100 ring-2 ring-blue-400' : ''
+                      }`}
+                      title={`${p.command} ${p.args.join(' ')}`}
+                    >
+                      <span className="text-lg">{p.icon}</span>
+                      <span className="truncate">{p.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs text-gray-500">
+              <input
+                type="checkbox"
+                checked={shellAdvanced}
+                onChange={(e) => setShellAdvanced(e.target.checked)}
+              />
+              Advanced — edit command manually
+            </label>
+
+            {shellAdvanced && (
+              <div className="space-y-2 border-l-2 border-gray-200 pl-3">
+                <input
+                  type="text"
+                  placeholder="/usr/local/bin/foo (full path)"
+                  className="border rounded px-2 py-1 w-full font-mono text-sm"
+                  value={shell.command}
+                  onChange={(e) =>
+                    updateAction({ ...shell, command: e.target.value })
+                  }
+                />
+                <input
+                  type="text"
+                  placeholder="args (space-separated)"
+                  className="border rounded px-2 py-1 w-full font-mono text-sm"
+                  value={shell.args.join(' ')}
+                  onChange={(e) =>
+                    updateAction({
+                      ...shell,
+                      args: e.target.value.split(/\s+/).filter((a) => a.length > 0),
+                    })
+                  }
+                />
+                <p className="text-xs text-gray-500">
+                  Runs via <code>std::process::Command</code> — not a shell.
+                  Use <code>/bin/sh -c "..."</code> as command for pipes,
+                  redirects, <code>~</code> expansion, or env vars.
+                </p>
+              </div>
+            )}
+
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
