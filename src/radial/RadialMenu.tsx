@@ -7,8 +7,18 @@ import Sector from './Sector';
 import { listMenuItems, execMenuItem } from './api';
 import type { MenuItem } from '../types';
 
-const radialLog = (msg: string) =>
-  invoke<void>('radial_log', { msg }).catch(() => {});
+const radialLog = (msg: string) => {
+  invoke<void>('radial_log', { msg })
+    .then(() => {
+      // Blue tint = invoke succeeded
+      document.body.style.background = 'rgba(0, 0, 255, 0.35)';
+    })
+    .catch((err) => {
+      // Red tint = invoke rejected
+      document.body.style.background = 'rgba(255, 0, 0, 0.35)';
+      document.title = `RADIAL_INVOKE_FAIL: ${String(err).slice(0, 80)}`;
+    });
+};
 
 const CENTER = 200;
 // Pie design: wedges reach close to the center. INNER also acts as the
