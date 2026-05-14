@@ -81,41 +81,38 @@ export default function RadialMenu() {
     [items, menuMode]
   );
 
-  // Optional: close when cursor leaves the radial window. Gated by user
-  // setting because it is non-standard radial UX and can be twitchy.
+  // Mirror closeOnLeave into a ref so the mouseleave listener (registered
+  // once at mount) can read the latest value without the toggle change
+  // having to re-attach listeners. This also avoids a race where the
+  // user moves the cursor out of the window before the initial
+  // getSettings() promise resolves.
+  const closeOnLeaveRef = useRef(false);
   useEffect(() => {
-    radialLog(`closeOnLeave effect: enabled=${closeOnLeave}`);
-    if (!closeOnLeave) return;
-    const onLeaveDoc = (e: MouseEvent) => {
-      radialLog(
-        `mouseleave fired (document) target=${(e.target as Element)?.tagName ?? '?'} relatedTarget=${(e.relatedTarget as Element)?.tagName ?? 'null'}`
-      );
-      if (Date.now() < ignoreMouseUntil.current) {
-        radialLog('mouseleave ignored (warm-up)');
-        return;
-      }
+    closeOnLeaveRef.current = closeOnLeave;
+  }, [closeOnLeave]);
+
+  // Optional close-on-leave. Listeners always installed; the ref-gated
+  // check in the handler decides whether to actually hide.
+  useEffect(() => {
+    const maybeHide = () => {
+      if (!closeOnLeaveRef.current) return;
       invoke('hide_radial').catch(() => {});
     };
     const onMouseOutWindow = (e: MouseEvent) => {
-      // mouseout bubbles; check relatedTarget === null means cursor left
-      // the entire viewport.
       if (e.relatedTarget !== null) return;
-      radialLog('mouseout (relatedTarget null) → treating as leave');
-      if (Date.now() < ignoreMouseUntil.current) return;
-      invoke('hide_radial').catch(() => {});
+      maybeHide();
     };
-    document.addEventListener('mouseleave', onLeaveDoc);
-    document.documentElement.addEventListener('mouseleave', onLeaveDoc);
-    document.body.addEventListener('mouseleave', onLeaveDoc);
+    document.addEventListener('mouseleave', maybeHide);
+    document.documentElement.addEventListener('mouseleave', maybeHide);
+    document.body.addEventListener('mouseleave', maybeHide);
     document.addEventListener('mouseout', onMouseOutWindow);
-    radialLog('mouseleave listeners attached (document + html + body + mouseout)');
     return () => {
-      document.removeEventListener('mouseleave', onLeaveDoc);
-      document.documentElement.removeEventListener('mouseleave', onLeaveDoc);
-      document.body.removeEventListener('mouseleave', onLeaveDoc);
+      document.removeEventListener('mouseleave', maybeHide);
+      document.documentElement.removeEventListener('mouseleave', maybeHide);
+      document.body.removeEventListener('mouseleave', maybeHide);
       document.removeEventListener('mouseout', onMouseOutWindow);
     };
-  }, [closeOnLeave]);
+  }, []);
 
   // Window-level mousedown handler. SVG onClick was not firing reliably
   // through Tauri's transparent macOS window, so we listen at the document
