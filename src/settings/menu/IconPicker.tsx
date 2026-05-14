@@ -8,6 +8,16 @@ type Props = {
   onChange: (icon: IconSource) => void;
 };
 
+// Curated 40-emoji palette for radial menu items. Covers common app /
+// action categories so the user rarely needs to type emoji manually.
+const EMOJI_PRESETS: string[] = [
+  '💬', '📧', '📱', '📝', '📅', '✅', '📁', '📊',
+  '⚙️', '🛠️', '💻', '🖥️', '🌐', '🔍', '🏠', '📌',
+  '🎵', '🎬', '🎮', '🎨', '📷', '📚', '🗂️', '🔗',
+  '⭐', '❤️', '💡', '🚀', '⚡', '🔥', '🎯', '🏆',
+  '🎉', '✨', '💎', '🌟', '⏰', '🔧', '🖱️', '🧠',
+];
+
 export default function IconPicker({ value, appPath, onChange }: Props) {
   const [busy, setBusy] = useState(false);
 
@@ -24,18 +34,43 @@ export default function IconPicker({ value, appPath, onChange }: Props) {
     }
   };
 
+  const currentEmoji = value.kind === 'emoji' ? value.value : '';
+
   return (
     <div className="space-y-2">
+      <div>
+        <label className="text-sm font-medium">Icon</label>
+        <div className="mt-2 grid grid-cols-8 gap-1 border rounded p-2">
+          {EMOJI_PRESETS.map((e) => {
+            const selected = currentEmoji === e;
+            return (
+              <button
+                key={e}
+                type="button"
+                onClick={() => onChange({ kind: 'emoji', value: e })}
+                className={`text-2xl leading-none aspect-square rounded hover:bg-gray-100 ${
+                  selected ? 'bg-blue-100 ring-2 ring-blue-400' : ''
+                }`}
+                title={e}
+              >
+                {e}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium">Icon (emoji)</label>
+        <label className="text-xs text-gray-500">Or custom emoji:</label>
         <input
           type="text"
           maxLength={4}
           className="border rounded px-2 py-1 w-16 text-center"
-          value={value.kind === 'emoji' ? value.value : ''}
+          value={currentEmoji}
           onChange={(e) => onChange({ kind: 'emoji', value: e.target.value })}
         />
       </div>
+
       {appPath && (
         <button
           type="button"
