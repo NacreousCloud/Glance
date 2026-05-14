@@ -45,3 +45,14 @@ export const upsertHotkeyBinding = (binding: HotkeyBinding) =>
   invoke<void>('upsert_hotkey_binding', { binding });
 export const deleteHotkeyBinding = (bindingId: string) =>
   invoke<void>('delete_hotkey_binding', { bindingId });
+
+export type ErrorEntry = {
+  id: string;
+  timestamp_ms: number;
+  item_id: string;
+  item_label: string;
+  message: string;
+};
+
+export const getRecentErrors = () => invoke<ErrorEntry[]>('get_recent_errors');
+export const clearErrors = () => invoke<void>('clear_errors');

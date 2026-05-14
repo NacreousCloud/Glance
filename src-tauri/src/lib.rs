@@ -1,6 +1,7 @@
 pub mod action;
 pub mod app_icon;
 pub mod commands;
+pub mod error_log;
 pub mod event_bus;
 pub mod hotkey;
 pub mod noti;
@@ -18,10 +19,10 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use commands::{
-    delete_hotkey_binding, delete_menu_item, exec_menu_item, extract_app_icon, get_recent_events,
-    get_settings, hide_radial, list_hotkey_bindings, list_menu_items, permission_status,
-    radial_log, reorder_menu_items, request_permission, set_settings, upsert_hotkey_binding,
-    upsert_menu_item,
+    clear_errors, delete_hotkey_binding, delete_menu_item, exec_menu_item, extract_app_icon,
+    get_recent_errors, get_recent_events, get_settings, hide_radial, list_hotkey_bindings,
+    list_menu_items, permission_status, radial_log, reorder_menu_items, request_permission,
+    set_settings, upsert_hotkey_binding, upsert_menu_item,
 };
 
 #[cfg(feature = "mock-os")]
@@ -93,6 +94,7 @@ pub fn run() {
     let bus = EventBus::new();
     let store = Arc::new(SettingsStore::new(default_config_path()));
     let active_source = ActiveSource(Arc::new(Mutex::new(None)));
+    let error_log = error_log::ErrorLog::new();
 
     let debug_shortcut = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyD);
 
@@ -151,6 +153,7 @@ pub fn run() {
         .manage(bus.clone())
         .manage(store.clone())
         .manage(active_source)
+        .manage(error_log.clone())
         .manage(shared_bindings.clone())
         .manage(rebind_tx.clone())
         .invoke_handler({
@@ -173,7 +176,9 @@ pub fn run() {
                     exec_menu_item,
                     extract_app_icon,
                     radial_log,
-                    hide_radial
+                    hide_radial,
+                    get_recent_errors,
+                    clear_errors
                 ]
             }
             #[cfg(not(feature = "mock-os"))]
@@ -194,7 +199,9 @@ pub fn run() {
                     exec_menu_item,
                     extract_app_icon,
                     radial_log,
-                    hide_radial
+                    hide_radial,
+                    get_recent_errors,
+                    clear_errors
                 ]
             }
         })

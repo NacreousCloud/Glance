@@ -217,6 +217,7 @@ pub fn exec_menu_item(
     item_id: String,
     store: tauri::State<Arc<SettingsStore>>,
     bus: tauri::State<crate::event_bus::EventBus>,
+    error_log: tauri::State<crate::error_log::ErrorLog>,
 ) -> Result<(), String> {
     let settings = store.load();
     let item = settings
@@ -229,20 +230,51 @@ pub fn exec_menu_item(
         Ok(()) => Ok(()),
         Err(e) => {
             let msg = e.to_string();
+            // One-line summary for the on-screen badge.
+            let short: String = msg
+                .lines()
+                .next()
+                .unwrap_or(msg.as_str())
+                .chars()
+                .take(80)
+                .collect();
             tracing::warn!(item_id = %item.id, error = %msg, "menu item exec failed");
-            // Publish a special error indicator so the overlay shows it at
-            // the cursor. Frontend recognises app_id="dev.error" and
-            // renders a red Persistent Badge regardless of the user's
-            // chosen style.
+
+            let now_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as u64)
+                .unwrap_or(0);
+            error_log.push(crate::error_log::ErrorEntry {
+                id: format!("err-{}-{}", item.id, now_ms),
+                timestamp_ms: now_ms,
+                item_id: item.id.clone(),
+                item_label: item.label.clone(),
+                message: msg.clone(),
+            });
+
+            // Special error event the overlay renders as a red Persistent
+            // Badge. app_name carries the short one-liner the user sees.
             bus.publish(crate::noti::NotiEvent::now(
                 "dev.error",
-                format!("⚠ {}", item.label),
+                short,
+                item.label.clone(),
                 msg.clone(),
-                String::new(),
             ));
             Err(msg)
         }
     }
+}
+
+#[tauri::command]
+pub fn get_recent_errors(
+    log: tauri::State<crate::error_log::ErrorLog>,
+) -> Vec<crate::error_log::ErrorEntry> {
+    log.snapshot()
+}
+
+#[tauri::command]
+pub fn clear_errors(log: tauri::State<crate::error_log::ErrorLog>) {
+    log.clear();
 }
 
 #[tauri::command]

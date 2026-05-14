@@ -5,6 +5,7 @@ import AutoStartToggle from './AutoStartToggle';
 import NotificationLog from './NotificationLog';
 import MenuEditor from './menu/MenuEditor';
 import HotkeyEditor from './hotkey/HotkeyEditor';
+import ErrorLog from './ErrorLog';
 import { getSettings, setSettings, type Settings as S } from './api';
 
 export default function Settings() {
@@ -49,6 +50,8 @@ export default function Settings() {
       <MenuEditor />
       <hr className="border-gray-100" />
       <HotkeyEditor />
+      <hr className="border-gray-100" />
+      <ErrorLog />
       <hr className="border-gray-100" />
       <label className="flex items-center justify-between border rounded p-3">
         <div>
