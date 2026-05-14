@@ -3,6 +3,7 @@ import StylePicker from './StylePicker';
 import PermissionPanel from './PermissionPanel';
 import AutoStartToggle from './AutoStartToggle';
 import NotificationLog from './NotificationLog';
+import MenuEditor from './menu/MenuEditor';
 import { getSettings, setSettings, type Settings as S } from './api';
 
 export default function Settings() {
@@ -43,6 +44,8 @@ export default function Settings() {
         value={state.autostart}
         onChange={(v) => update({ ...state, autostart: v })}
       />
+      <hr className="border-gray-100" />
+      <MenuEditor />
     </div>
   );
 }

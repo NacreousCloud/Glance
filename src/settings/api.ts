@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import type { MenuItem } from '../types';
 
 export type IndicatorStyle = 'ring_pulse' | 'icon_badge' | 'persistent_badge';
 export type Settings = { indicator_style: IndicatorStyle; autostart: boolean };
@@ -22,3 +23,13 @@ export const setSettings = (settings: Settings) => invoke<void>('set_settings', 
 export const permissionStatus = () => invoke<PermissionStatus>('permission_status');
 export const requestPermission = () => invoke<void>('request_permission');
 export const getRecentEvents = () => invoke<NotiEvent[]>('get_recent_events');
+
+export const listMenuItems = () => invoke<MenuItem[]>('list_menu_items');
+export const upsertMenuItem = (item: MenuItem) =>
+  invoke<void>('upsert_menu_item', { item });
+export const deleteMenuItem = (itemId: string) =>
+  invoke<void>('delete_menu_item', { itemId });
+export const reorderMenuItems = (ids: string[]) =>
+  invoke<void>('reorder_menu_items', { ids });
+export const extractAppIcon = (path: string) =>
+  invoke<string>('extract_app_icon', { path });
