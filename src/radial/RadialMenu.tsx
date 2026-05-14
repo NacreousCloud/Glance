@@ -92,16 +92,17 @@ export default function RadialMenu() {
       onClick={onClick}
       style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
-      {/* Transparent click-capture background so clicks outside the pie
-          still trigger onClick. Without this, SVG only fires on rendered
-          shapes (the wedges + center disc), and clicks in the 4 corners
-          of the 400x400 window do nothing. */}
+      {/* Semi-opaque backdrop. macOS transparent windows pass clicks through
+          on alpha=0 areas, so a barely-visible alpha (e.g. 0.001) is still
+          treated as transparent and clicks never reach onClick. A modest
+          dim (0.15) gives a modal feel AND reliably captures clicks in
+          the 4 corners outside the pie. */}
       <rect
         x={0}
         y={0}
         width={CENTER * 2}
         height={CENTER * 2}
-        fill="rgba(0,0,0,0.001)"
+        fill="rgba(0,0,0,0.18)"
       />
       <g transform={`translate(${CENTER} ${CENTER})`}>
         {filtered.map((item, i) => (
