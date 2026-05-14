@@ -1,6 +1,7 @@
-type Props = { x: number; y: number; appName: string };
-export default function IconBadge({ x, y, appName }: Props) {
+type Props = { x: number; y: number; appName: string; hue: number };
+export default function IconBadge({ x, y, appName, hue }: Props) {
   const initial = appName.trim().slice(0, 1).toUpperCase() || '?';
+  const bg = `hsl(${hue} 70% 45%)`;
   return (
     <div
       data-testid="icon-badge"
@@ -11,7 +12,7 @@ export default function IconBadge({ x, y, appName }: Props) {
         width: 28,
         height: 28,
         borderRadius: 8,
-        background: '#1f2937',
+        background: bg,
         color: 'white',
         display: 'flex',
         alignItems: 'center',

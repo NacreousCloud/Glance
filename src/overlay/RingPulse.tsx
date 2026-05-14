@@ -1,6 +1,7 @@
-type Props = { x: number; y: number };
-export default function RingPulse({ x, y }: Props) {
+type Props = { x: number; y: number; hue: number };
+export default function RingPulse({ x, y, hue }: Props) {
   const size = 48;
+  const color = `hsl(${hue} 70% 55%)`;
   return (
     <div
       data-testid="ring-pulse"
@@ -11,7 +12,7 @@ export default function RingPulse({ x, y }: Props) {
         width: size,
         height: size,
         borderRadius: '50%',
-        border: '3px solid #4ade80',
+        border: `3px solid ${color}`,
         animation: 'mn-pulse 900ms ease-out forwards',
       }}
     />

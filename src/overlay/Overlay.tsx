@@ -15,6 +15,7 @@ type Payload = {
   viewport_h: number;
   app_name: string;
   title: string;
+  color_hue: number;
 };
 
 // Keep the indicator visually inside the viewport even if Rust-side window
@@ -68,10 +69,16 @@ export default function Overlay() {
         const { x, y } = clamp(active);
         switch (active.style) {
           case 'ring_pulse':
-            return <RingPulse key={active.id} x={x} y={y} />;
+            return <RingPulse key={active.id} x={x} y={y} hue={active.color_hue} />;
           case 'icon_badge':
             return (
-              <IconBadge key={active.id} x={x} y={y} appName={active.app_name} />
+              <IconBadge
+                key={active.id}
+                x={x}
+                y={y}
+                appName={active.app_name}
+                hue={active.color_hue}
+              />
             );
           case 'persistent_badge':
             return (
@@ -80,6 +87,7 @@ export default function Overlay() {
                 x={x}
                 y={y}
                 appName={active.app_name}
+                hue={active.color_hue}
               />
             );
           default:
