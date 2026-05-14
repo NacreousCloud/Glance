@@ -1,5 +1,8 @@
 # Glance
 
+[![CI](https://github.com/NacreousCloud/Glance/actions/workflows/ci.yml/badge.svg)](https://github.com/NacreousCloud/Glance/actions/workflows/ci.yml)
+[![Release](https://github.com/NacreousCloud/Glance/actions/workflows/release.yml/badge.svg)](https://github.com/NacreousCloud/Glance/actions/workflows/release.yml)
+
 데스크톱 알림이 발생할 때 마우스 커서 위치에 시각적 인디케이터를 표시하고, 커서 중심에서 라디얼 퀵메뉴를 띄우는 macOS + Windows 앱.
 
 이전 이름: `mouse-noti` (v0.4.0부터 Glance로 변경).
