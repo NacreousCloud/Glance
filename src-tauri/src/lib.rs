@@ -18,10 +18,9 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use commands::{
-    debug_hide_radial, debug_show_radial, delete_hotkey_binding, delete_menu_item, exec_menu_item,
-    extract_app_icon, get_recent_events, get_settings, list_hotkey_bindings, list_menu_items,
-    permission_status, reorder_menu_items, request_permission, set_settings,
-    upsert_hotkey_binding, upsert_menu_item,
+    delete_hotkey_binding, delete_menu_item, exec_menu_item, extract_app_icon, get_recent_events,
+    get_settings, list_hotkey_bindings, list_menu_items, permission_status, reorder_menu_items,
+    request_permission, set_settings, upsert_hotkey_binding, upsert_menu_item,
 };
 
 #[cfg(feature = "mock-os")]
@@ -153,9 +152,7 @@ pub fn run() {
                     upsert_hotkey_binding,
                     delete_hotkey_binding,
                     exec_menu_item,
-                    extract_app_icon,
-                    debug_show_radial,
-                    debug_hide_radial
+                    extract_app_icon
                 ]
             }
             #[cfg(not(feature = "mock-os"))]
@@ -174,9 +171,7 @@ pub fn run() {
                     upsert_hotkey_binding,
                     delete_hotkey_binding,
                     exec_menu_item,
-                    extract_app_icon,
-                    debug_show_radial,
-                    debug_hide_radial
+                    extract_app_icon
                 ]
             }
         })
