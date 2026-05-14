@@ -104,6 +104,41 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
         appPath={appPath}
         onChange={(icon) => setItem({ ...item, icon })}
       />
+      <div>
+        <label className="text-sm font-medium">Show in modes</label>
+        <div className="flex gap-3 mt-1">
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="checkbox"
+              checked={item.tags.includes('launcher')}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  tags: e.target.checked
+                    ? Array.from(new Set([...item.tags, 'launcher']))
+                    : item.tags.filter((t) => t !== 'launcher'),
+                })
+              }
+            />
+            Launcher
+          </label>
+          <label className="flex items-center gap-1 text-sm">
+            <input
+              type="checkbox"
+              checked={item.tags.includes('notification')}
+              onChange={(e) =>
+                setItem({
+                  ...item,
+                  tags: e.target.checked
+                    ? Array.from(new Set([...item.tags, 'notification']))
+                    : item.tags.filter((t) => t !== 'notification'),
+                })
+              }
+            />
+            Notification
+          </label>
+        </div>
+      </div>
       <div className="flex gap-2">
         <button
           type="button"

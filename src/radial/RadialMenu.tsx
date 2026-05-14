@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { sectorAt } from './geometry';
@@ -20,14 +20,18 @@ type ShowPayload = {
 export default function RadialMenu() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [menuMode, setMenuMode] = useState<string>('all');
+  const [recentAppName, setRecentAppName] = useState<string | null>(null);
 
   useEffect(() => {
     listMenuItems().then(setItems);
-    const un = listen<ShowPayload>('radial:show', () => {
+    const un = listen<ShowPayload>('radial:show', (e) => {
       listMenuItems().then(setItems);
+      setMenuMode(e.payload.menu_mode);
+      setRecentAppName(e.payload.recent_app_name);
     });
-    const escListener = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+    const escListener = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') {
         getCurrentWebviewWindow().hide();
       }
     };
@@ -38,11 +42,19 @@ export default function RadialMenu() {
     };
   }, []);
 
+  const filtered = useMemo(
+    () =>
+      menuMode === 'all'
+        ? items
+        : items.filter((it) => it.tags.includes(menuMode)),
+    [items, menuMode]
+  );
+
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const dx = e.clientX - rect.left - CENTER;
     const dy = e.clientY - rect.top - CENTER;
-    setHovered(sectorAt(dx, dy, items.length, INNER, OUTER));
+    setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
   };
 
   const onClick = () => {
@@ -50,7 +62,7 @@ export default function RadialMenu() {
       getCurrentWebviewWindow().hide();
       return;
     }
-    const item = items[hovered];
+    const item = filtered[hovered];
     if (!item) return;
     execMenuItem(item.id);
     getCurrentWebviewWindow().hide();
@@ -66,17 +78,30 @@ export default function RadialMenu() {
       style={{ position: 'fixed', top: 0, left: 0 }}
     >
       <g transform={`translate(${CENTER} ${CENTER})`}>
-        {items.map((item, i) => (
+        {filtered.map((item, i) => (
           <Sector
             key={item.id}
             item={item}
             index={i}
-            total={items.length}
+            total={filtered.length}
             hovered={hovered === i}
             innerRadius={INNER}
             outerRadius={OUTER}
           />
         ))}
+        {recentAppName && menuMode === 'notification' && (
+          <text
+            x={0}
+            y={0}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fill="white"
+            fontSize={11}
+            pointerEvents="none"
+          >
+            {recentAppName}
+          </text>
+        )}
       </g>
     </svg>
   );
