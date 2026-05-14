@@ -45,6 +45,38 @@ export default function RadialMenu() {
     };
   }, []);
 
+  // Window-level mousedown handler. SVG onClick was not firing reliably
+  // through Tauri's transparent macOS window, so we listen at the document
+  // level instead. Computes the sector from raw clientX/Y at click time.
+  useEffect(() => {
+    const onMouseDown = (e: MouseEvent) => {
+      const dx = e.clientX - CENTER;
+      const dy = e.clientY - CENTER;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const sector = sectorAt(dx, dy, filtered.length, INNER, OUTER);
+      console.debug('[radial] window mousedown', {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        dx,
+        dy,
+        r,
+        sector,
+        itemCount: filtered.length,
+      });
+      if (r < INNER || sector === null) {
+        getCurrentWebviewWindow().hide();
+        return;
+      }
+      const item = filtered[sector];
+      if (item) {
+        execMenuItem(item.id);
+      }
+      getCurrentWebviewWindow().hide();
+    };
+    window.addEventListener('mousedown', onMouseDown);
+    return () => window.removeEventListener('mousedown', onMouseDown);
+  }, [filtered]);
+
   const filtered = useMemo(
     () =>
       menuMode === 'all'
@@ -62,26 +94,8 @@ export default function RadialMenu() {
     setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
   };
 
-  const onClick = (e: React.MouseEvent<SVGSVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const dx = e.clientX - rect.left - CENTER;
-    const dy = e.clientY - rect.top - CENTER;
-    const r = Math.sqrt(dx * dx + dy * dy);
-    const sector = sectorAt(dx, dy, filtered.length, INNER, OUTER);
-    console.debug('[radial] click', { dx, dy, r, sector, centerHovered, hovered });
-    // Center circle (r < INNER) or outside the pie (r > OUTER) → close.
-    if (r < INNER || sector === null) {
-      getCurrentWebviewWindow().hide();
-      return;
-    }
-    const item = filtered[sector];
-    if (!item) {
-      getCurrentWebviewWindow().hide();
-      return;
-    }
-    execMenuItem(item.id);
-    getCurrentWebviewWindow().hide();
-  };
+  // (Click handling moved to a window-level mousedown listener in useEffect
+  // above so it works through Tauri's transparent macOS window.)
 
   return (
     <svg
@@ -89,7 +103,6 @@ export default function RadialMenu() {
       width={CENTER * 2}
       height={CENTER * 2}
       onMouseMove={onMouseMove}
-      onClick={onClick}
       style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
       {/* Semi-opaque backdrop. macOS transparent windows pass clicks through
