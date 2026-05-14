@@ -14,7 +14,9 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use commands::{
-    get_recent_events, get_settings, permission_status, request_permission, set_settings,
+    delete_hotkey_binding, delete_menu_item, exec_menu_item, get_recent_events, get_settings,
+    list_hotkey_bindings, list_menu_items, permission_status, reorder_menu_items,
+    request_permission, set_settings, upsert_hotkey_binding, upsert_menu_item,
 };
 
 #[cfg(feature = "mock-os")]
@@ -114,7 +116,15 @@ pub fn run() {
                     permission_status,
                     request_permission,
                     inject_mock_event,
-                    get_recent_events
+                    get_recent_events,
+                    list_menu_items,
+                    upsert_menu_item,
+                    delete_menu_item,
+                    reorder_menu_items,
+                    list_hotkey_bindings,
+                    upsert_hotkey_binding,
+                    delete_hotkey_binding,
+                    exec_menu_item
                 ]
             }
             #[cfg(not(feature = "mock-os"))]
@@ -124,7 +134,15 @@ pub fn run() {
                     set_settings,
                     permission_status,
                     request_permission,
-                    get_recent_events
+                    get_recent_events,
+                    list_menu_items,
+                    upsert_menu_item,
+                    delete_menu_item,
+                    reorder_menu_items,
+                    list_hotkey_bindings,
+                    upsert_hotkey_binding,
+                    delete_hotkey_binding,
+                    exec_menu_item
                 ]
             }
         })

@@ -1,4 +1,5 @@
-use crate::settings::{Settings, SettingsStore};
+use crate::action::ActionRunner;
+use crate::settings::{HotkeyBinding, MenuItem, Settings, SettingsStore};
 use std::sync::Arc;
 
 #[derive(serde::Serialize)]
@@ -95,4 +96,102 @@ pub fn get_recent_events(
     bus: tauri::State<crate::event_bus::EventBus>,
 ) -> Vec<crate::noti::NotiEvent> {
     bus.recent_within(std::time::Duration::from_secs(3600)) // Last hour
+}
+
+#[tauri::command]
+pub fn list_menu_items(store: tauri::State<Arc<SettingsStore>>) -> Vec<MenuItem> {
+    store.load().menu_items
+}
+
+#[tauri::command]
+pub fn upsert_menu_item(
+    item: MenuItem,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let mut settings = store.load();
+    if let Some(existing) = settings.menu_items.iter_mut().find(|i| i.id == item.id) {
+        *existing = item;
+    } else {
+        settings.menu_items.push(item);
+    }
+    store.save(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_menu_item(
+    item_id: String,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let mut settings = store.load();
+    settings.menu_items.retain(|i| i.id != item_id);
+    store.save(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn reorder_menu_items(
+    ids: Vec<String>,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let mut settings = store.load();
+    let mut by_id: std::collections::HashMap<String, MenuItem> = settings
+        .menu_items
+        .drain(..)
+        .map(|i| (i.id.clone(), i))
+        .collect();
+    let mut reordered = Vec::with_capacity(ids.len());
+    for id in ids {
+        if let Some(item) = by_id.remove(&id) {
+            reordered.push(item);
+        }
+    }
+    reordered.extend(by_id.into_values());
+    settings.menu_items = reordered;
+    store.save(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn list_hotkey_bindings(store: tauri::State<Arc<SettingsStore>>) -> Vec<HotkeyBinding> {
+    store.load().hotkey_bindings
+}
+
+#[tauri::command]
+pub fn upsert_hotkey_binding(
+    binding: HotkeyBinding,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let mut settings = store.load();
+    if let Some(existing) = settings
+        .hotkey_bindings
+        .iter_mut()
+        .find(|b| b.id == binding.id)
+    {
+        *existing = binding;
+    } else {
+        settings.hotkey_bindings.push(binding);
+    }
+    store.save(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_hotkey_binding(
+    binding_id: String,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let mut settings = store.load();
+    settings.hotkey_bindings.retain(|b| b.id != binding_id);
+    store.save(&settings).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn exec_menu_item(
+    item_id: String,
+    store: tauri::State<Arc<SettingsStore>>,
+) -> Result<(), String> {
+    let settings = store.load();
+    let item = settings
+        .menu_items
+        .iter()
+        .find(|i| i.id == item_id)
+        .ok_or_else(|| format!("menu item not found: {item_id}"))?;
+    ActionRunner::execute(&item.action).map_err(|e| e.to_string())
 }
