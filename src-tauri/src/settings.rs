@@ -10,9 +10,64 @@ pub enum IndicatorStyle {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct MenuItem {
+    pub id: String,
+    pub label: String,
+    pub icon: IconSource,
+    pub action: Action,
+    #[serde(default = "default_tags")]
+    pub tags: Vec<String>,
+}
+
+fn default_tags() -> Vec<String> { vec!["launcher".into()] }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum IconSource {
+    Emoji { value: String },
+    AppIconPng { base64: String, source_path: String },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum Action {
+    LaunchApp { path: String },
+    OpenUrl { url: String },
+    RunShell {
+        command: String,
+        args: Vec<String>,
+        #[serde(default = "default_true")]
+        confirm: bool,
+    },
+}
+
+fn default_true() -> bool { true }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct HotkeyBinding {
+    pub id: String,
+    pub trigger: HotkeyTrigger,
+    #[serde(default = "default_mode")]
+    pub menu_mode: String,
+}
+
+fn default_mode() -> String { "all".into() }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum HotkeyTrigger {
+    Keyboard { accelerator: String },
+    Mouse { button: u8, modifiers: u8 },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Settings {
     pub indicator_style: IndicatorStyle,
     pub autostart: bool,
+    #[serde(default)]
+    pub menu_items: Vec<MenuItem>,
+    #[serde(default)]
+    pub hotkey_bindings: Vec<HotkeyBinding>,
 }
 
 impl Default for Settings {
@@ -20,6 +75,8 @@ impl Default for Settings {
         Self {
             indicator_style: IndicatorStyle::RingPulse,
             autostart: false,
+            menu_items: Vec::new(),
+            hotkey_bindings: Vec::new(),
         }
     }
 }
@@ -82,6 +139,8 @@ mod tests {
         let s = Settings {
             indicator_style: IndicatorStyle::IconBadge,
             autostart: true,
+            menu_items: Vec::new(),
+            hotkey_bindings: Vec::new(),
         };
         store.save(&s).unwrap();
         let loaded = store.load();
@@ -96,6 +155,8 @@ mod tests {
         let good = Settings {
             indicator_style: IndicatorStyle::PersistentBadge,
             autostart: false,
+            menu_items: Vec::new(),
+            hotkey_bindings: Vec::new(),
         };
         store.save(&good).unwrap();
         std::fs::write(&path, "GARBAGE").unwrap();
@@ -108,5 +169,41 @@ mod tests {
         let dir = tempdir().unwrap();
         let store = SettingsStore::new(dir.path().join("nope.toml"));
         assert_eq!(store.load(), Settings::default());
+    }
+
+    #[test]
+    fn menu_item_emoji_roundtrip() {
+        let s = Settings {
+            indicator_style: IndicatorStyle::RingPulse,
+            autostart: false,
+            menu_items: vec![MenuItem {
+                id: "fixed-id".into(),
+                label: "Open Slack".into(),
+                icon: IconSource::Emoji { value: "💬".into() },
+                action: Action::LaunchApp { path: "/Applications/Slack.app".into() },
+                tags: vec!["launcher".into()],
+            }],
+            hotkey_bindings: vec![HotkeyBinding {
+                id: "hk-1".into(),
+                trigger: HotkeyTrigger::Keyboard { accelerator: "CommandOrControl+Shift+M".into() },
+                menu_mode: "all".into(),
+            }],
+        };
+        let toml = toml::to_string_pretty(&s).unwrap();
+        let parsed: Settings = toml::from_str(&toml).unwrap();
+        assert_eq!(parsed, s);
+    }
+
+    #[test]
+    fn legacy_v0_2_settings_loads_with_defaults() {
+        let legacy = r#"
+indicator_style = "ring_pulse"
+autostart = false
+"#;
+        let parsed: Settings = toml::from_str(legacy).unwrap();
+        assert_eq!(parsed.indicator_style, IndicatorStyle::RingPulse);
+        assert_eq!(parsed.autostart, false);
+        assert!(parsed.menu_items.is_empty());
+        assert!(parsed.hotkey_bindings.is_empty());
     }
 }
