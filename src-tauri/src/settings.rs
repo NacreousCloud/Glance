@@ -60,7 +60,43 @@ pub enum HotkeyTrigger {
     Mouse { button: u8, modifiers: u8 },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct RadialTheme {
+    #[serde(default = "default_backdrop_color")]
+    pub backdrop_color: String,
+    #[serde(default = "default_backdrop_opacity")]
+    pub backdrop_opacity: f32,
+    #[serde(default = "default_sector_color")]
+    pub sector_color: String,
+    #[serde(default = "default_sector_opacity")]
+    pub sector_opacity: f32,
+    #[serde(default = "default_hover_color")]
+    pub hover_color: String,
+    #[serde(default = "default_center_color")]
+    pub center_color: String,
+}
+
+fn default_backdrop_color() -> String { "#000000".into() }
+fn default_backdrop_opacity() -> f32 { 0.0 }
+fn default_sector_color() -> String { "#1f2937".into() }
+fn default_sector_opacity() -> f32 { 0.85 }
+fn default_hover_color() -> String { "#3b82f6".into() }
+fn default_center_color() -> String { "#111827".into() }
+
+impl Default for RadialTheme {
+    fn default() -> Self {
+        Self {
+            backdrop_color: default_backdrop_color(),
+            backdrop_opacity: default_backdrop_opacity(),
+            sector_color: default_sector_color(),
+            sector_opacity: default_sector_opacity(),
+            hover_color: default_hover_color(),
+            center_color: default_center_color(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Settings {
     pub indicator_style: IndicatorStyle,
     pub autostart: bool,
@@ -73,6 +109,8 @@ pub struct Settings {
     /// ESC / focus-loss).
     #[serde(default)]
     pub radial_close_on_leave: bool,
+    #[serde(default)]
+    pub radial_theme: RadialTheme,
 }
 
 impl Default for Settings {
@@ -83,6 +121,7 @@ impl Default for Settings {
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
+            radial_theme: RadialTheme::default(),
         }
     }
 }
@@ -148,6 +187,7 @@ mod tests {
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
+            radial_theme: RadialTheme::default(),
         };
         store.save(&s).unwrap();
         let loaded = store.load();
@@ -165,6 +205,7 @@ mod tests {
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
             radial_close_on_leave: false,
+            radial_theme: RadialTheme::default(),
         };
         store.save(&good).unwrap();
         std::fs::write(&path, "GARBAGE").unwrap();
@@ -197,6 +238,7 @@ mod tests {
                 menu_mode: "all".into(),
             }],
             radial_close_on_leave: false,
+            radial_theme: RadialTheme::default(),
         };
         let toml = toml::to_string_pretty(&s).unwrap();
         let parsed: Settings = toml::from_str(&toml).unwrap();

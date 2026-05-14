@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import RingPulse from './RingPulse';
 import IconBadge from './IconBadge';

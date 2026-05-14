@@ -6,11 +6,12 @@ import NotificationLog from './NotificationLog';
 import MenuEditor from './menu/MenuEditor';
 import HotkeyEditor from './hotkey/HotkeyEditor';
 import ErrorLog from './ErrorLog';
-import { getSettings, setSettings, type Settings as S } from './api';
+import RadialThemeEditor from './RadialThemeEditor';
+import { getSettings, setSettings, DEFAULT_RADIAL_THEME, type Settings as S } from './api';
 
 export default function Settings() {
   const [state, setState] = useState<S | null>(null);
-  const saveTimer = useRef<number>();
+  const saveTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     getSettings().then(setState);
@@ -32,7 +33,7 @@ export default function Settings() {
     <div className="p-6 max-w-md mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">mouse-noti</h1>
-        <span className="text-xs text-gray-400">v0.1.0</span>
+        <span className="text-xs text-gray-400">v0.3.5</span>
       </div>
       <PermissionPanel />
       <hr className="border-gray-100" />
@@ -42,16 +43,18 @@ export default function Settings() {
         value={state.indicator_style}
         onChange={(s) => update({ ...state, indicator_style: s })}
       />
-      <AutoStartToggle
-        value={state.autostart}
-        onChange={(v) => update({ ...state, autostart: v })}
-      />
+      <AutoStartToggle />
       <hr className="border-gray-100" />
       <MenuEditor />
       <hr className="border-gray-100" />
       <HotkeyEditor />
       <hr className="border-gray-100" />
       <ErrorLog />
+      <hr className="border-gray-100" />
+      <RadialThemeEditor
+        value={state.radial_theme ?? DEFAULT_RADIAL_THEME}
+        onChange={(t) => update({ ...state, radial_theme: t })}
+      />
       <hr className="border-gray-100" />
       <label className="flex items-center justify-between border rounded p-3">
         <div>

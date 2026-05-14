@@ -2,12 +2,29 @@ import { invoke } from '@tauri-apps/api/core';
 import type { HotkeyBinding, MenuItem } from '../types';
 
 export type IndicatorStyle = 'ring_pulse' | 'icon_badge' | 'persistent_badge';
+export type RadialTheme = {
+  backdrop_color: string;
+  backdrop_opacity: number;
+  sector_color: string;
+  sector_opacity: number;
+  hover_color: string;
+  center_color: string;
+};
+export const DEFAULT_RADIAL_THEME: RadialTheme = {
+  backdrop_color: '#000000',
+  backdrop_opacity: 0.0,
+  sector_color: '#1f2937',
+  sector_opacity: 0.85,
+  hover_color: '#3b82f6',
+  center_color: '#111827',
+};
 export type Settings = {
   indicator_style: IndicatorStyle;
   autostart: boolean;
   menu_items?: MenuItem[];
   hotkey_bindings?: HotkeyBinding[];
   radial_close_on_leave: boolean;
+  radial_theme: RadialTheme;
 };
 export type PermissionStatus = {
   accessibility_ok: boolean;

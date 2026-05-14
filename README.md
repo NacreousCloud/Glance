@@ -4,7 +4,14 @@
 
 ## 현재 상태
 
-Phase 1 (MVP). 인디케이터 표시까지. 라디얼 퀵메뉴는 Phase 2 예정.
+**v0.3.5** — Phase 1 (알림 인디케이터) + Phase 2 (라디얼 퀵메뉴) 출시.
+
+- 알림 인디케이터 3종 (Ring Pulse / Icon Badge / Persistent Badge)
+- 라디얼 퀵메뉴 (커서 중심 부채꼴, 키보드 단축키 호출)
+- 메뉴 액션: 앱 실행 / URL / 셸 명령
+- 셸 명령 프리셋 16종 + 고급 수동 입력 모드
+- 라디얼 외관 커스터마이즈 (색상, 투명도)
+- 실행 실패 시 빨간 배지 알림 + Recent errors 패널
 
 지원 OS: macOS 13+, Windows 10 (1809+).
 
@@ -91,14 +98,51 @@ await window.__TAURI__.core.invoke('inject_mock_event', {
 
 ```bash
 pnpm tauri build              # DMG (macOS) / MSI (Windows) 생성
+pnpm tauri build --no-bundle  # 바이너리만 (번들 스킵, 빠른 반복 테스트용)
 pnpm tauri build --debug      # 디버그 심볼 포함 빌드
 ```
 
 산출물 위치:
-- macOS: `src-tauri/target/release/bundle/dmg/*.dmg`
-- Windows: `src-tauri/target/release/bundle/msi/*.msi`
+- 바이너리: `src-tauri/target/release/mouse-noti`
+- macOS DMG: `src-tauri/target/release/bundle/dmg/*.dmg`
+- Windows MSI: `src-tauri/target/release/bundle/msi/*.msi`
 
 코드 사이닝은 환경 변수 (`APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` 등)로 설정. 미설정 시 unsigned 빌드.
+
+### 4. 빌드한 바이너리 직접 실행
+
+릴리스 바이너리를 dev 서버 없이 직접 띄울 때:
+
+```bash
+# 기존 인스턴스 종료
+pkill -f "target/release/mouse-noti"
+
+# 포그라운드 (로그 보임)
+./src-tauri/target/release/mouse-noti
+
+# 백그라운드 + 로그 파일
+./src-tauri/target/release/mouse-noti > /tmp/mouse-noti.log 2>&1 &
+
+# 로그 레벨 조정
+RUST_LOG=mouse_noti=debug ./src-tauri/target/release/mouse-noti
+```
+
+dev 모드와 다른 점:
+- HMR 없음. 프론트엔드 변경 시 `pnpm tauri build --no-bundle` 재실행.
+- 첫 실행 시 권한 다이얼로그가 dev 빌드와 별도 항목으로 뜸 (바이너리 해시가 다름).
+- 트레이 아이콘 우클릭 → `Quit mouse-noti` 로 종료.
+
+### 5. 변경된 백엔드 즉시 반영하는 가장 빠른 흐름
+
+Rust 코드만 수정 후:
+
+```bash
+pnpm tauri build --no-bundle && \
+  pkill -f "target/release/mouse-noti"; \
+  ./src-tauri/target/release/mouse-noti > /tmp/mouse-noti.log 2>&1 &
+```
+
+빌드 실패 시 `pkill` 안 함 → 기존 인스턴스 유지. 빌드 성공 시 교체.
 
 ---
 
@@ -122,32 +166,75 @@ pnpm tauri build --debug      # 디버그 심볼 포함 빌드
 
 설정창의 **Launch at login** 체크박스. macOS는 LaunchAgent, Windows는 레지스트리 항목 자동 등록.
 
-### 라디얼 퀵메뉴 (v0.3.0)
+### 라디얼 퀵메뉴
 
-마우스 커서 중심에 등장하는 부채꼴 메뉴. 사용자가 등록한 단축키(키보드 조합 또는 마우스 버튼)로 호출. 각 섹터를 호버 → 클릭하면 액션 실행.
+마우스 커서 중심에 등장하는 부채꼴 메뉴. 등록한 단축키로 호출. 섹터를 호버 → 클릭하면 액션 실행.
 
-**액션 종류**:
-- `launch_app` — 지정한 `.app` 번들 실행 (macOS `open` 사용)
-- `open_url` — 기본 브라우저로 URL 열기
-- `run_shell` — 셸 명령 실행. 아이템별 `confirm` 옵션 (기본: true) → 실행 전 확인 다이얼로그.
+#### 액션 종류
 
-**아이콘**: 이모지 직접 입력 또는 (launch_app 액션 한정) `Use app icon` 버튼으로 시스템 앱 아이콘 추출 → base64 PNG로 저장.
+- **`launch_app`** — `.app` 번들 실행 (macOS `open` 사용). `Browse…` 버튼으로 파일 선택 가능.
+- **`open_url`** — 기본 브라우저로 URL 열기.
+- **`run_shell`** — 셸 명령 실행. 아이템별 `confirm` 옵션 (기본: true) → 실행 전 확인 다이얼로그.
 
-**단축키 등록** (Settings → Hotkey bindings → `+ Add binding`):
-- **Keyboard**: `Capture` 버튼 클릭 후 원하는 키 조합 누름 (예: `Cmd+Shift+M`, `F13`)
-- **Mouse**: `Mouse` 탭 선택 → `Capture` 후 수식키 누른 채로 마우스 버튼 클릭 (예: `Cmd+마우스 4번`)
-- **menu_mode** 선택:
-  - `all` — 모든 메뉴 아이템 표시
-  - `launcher` — `launcher` 태그가 있는 아이템만
-  - `notification` — `notification` 태그가 있는 아이템만, 라디얼 중앙에 최근 5초 내 발생한 알림의 sender 이름 표시
+#### 셸 명령 프리셋
 
-**섹터 수**: 아이템 수에 따라 자동 (1~12개). 메뉴 아이템이 비어있으면 도넛만 표시되고 클릭 시 닫힘.
+`run_shell` 액션 추가 시 16개의 프리셋 그리드 노출 (스크린샷, 클립보드 처리, Wi-Fi 토글 등). 클릭 한 번으로 명령 채워짐.
 
-**ESC** 또는 메뉴 영역 밖 클릭으로 취소.
+직접 명령 입력하려면 **Advanced (manual)** 토글 → 명령/인자 자유 입력. 보안 위험 있으므로 신뢰하는 명령만.
 
-설정창 → Menu items → `+ Add item`으로 아이템 추가. Edit/Delete/↑↓로 관리.
+#### 아이콘
 
-**보안 주의**: `run_shell` 액션은 mouse-noti 프로세스의 권한으로 실행됨. `confirm` 옵션을 켜둘 것을 권장.
+- **이모지**: 40개 프리셋 그리드 또는 직접 텍스트 입력
+- **앱 아이콘**: `launch_app` 액션 한정. `Use app icon` 버튼 → 시스템 앱 아이콘 추출 → base64 PNG 저장
+
+#### 단축키 등록
+
+Settings → Hotkey bindings → `+ Add binding`:
+
+- **Keyboard**: `Capture` 버튼 → 원하는 키 조합 누름 (예: `Cmd+Shift+M`, `F13`, `F19`)
+  - macOS는 `F20`–`F24` 미지원 (RegisterEventHotKey 제약). Karabiner로 재매핑 권장.
+- **Mouse**: macOS는 현재 비활성화 (rdev 충돌). 키보드만 동작.
+- **menu_mode**:
+  - `all` — 전체 메뉴 아이템
+  - `launcher` — `launcher` 태그
+  - `notification` — `notification` 태그 + 라디얼 중앙에 최근 5초 알림 sender 이름
+
+#### 닫힘 조건
+
+- 섹터 클릭 → 액션 실행 후 자동 닫힘
+- 중앙 disc 클릭 → 취소 (액션 없음)
+- 메뉴 영역 밖 클릭 → 포커스 잃음 → 자동 닫힘
+- **ESC** 키
+- Settings → **Close radial on cursor leave** 활성화 시 커서가 메뉴 영역 벗어나면 즉시 닫힘
+
+#### 외관 커스터마이즈
+
+Settings → **Radial appearance** 섹션:
+
+- **Backdrop** — 배경 사각형 영역 색/투명도. 기본값 0% (사각형 안 보임).
+- **Sector** — 일반 섹터 색/투명도
+- **Hover** — 마우스 올린 섹터 색
+- **Center disc** — 중앙 취소 버튼 색
+
+`Reset` 버튼으로 기본값 복원.
+
+#### 보안 주의
+
+- `run_shell` 액션은 mouse-noti 프로세스 권한으로 실행. `confirm` 옵션 켜두기 권장.
+- 스크린샷 (`screencapture`) 같은 화면 캡처 명령은 macOS Screen Recording 권한이 필요. 권한 부여 후 앱 재시작.
+
+### 에러 알림
+
+메뉴 액션이 실패하면 (예: 명령어 오타, 파일 없음):
+
+1. 커서 위치에 **빨간 배지** 1줄 노출 — 에러 메시지 첫 줄 (80자)
+2. Settings → **Recent errors** 패널에 시간순으로 누적 (최근 50건)
+3. 각 항목 우측 **More** 버튼 → 전체 에러 메시지
+4. **Clear** 버튼 → 로그 비우기
+
+### 스크린샷 팁
+
+라디얼에서 `screencapture -i` 같은 캡처 명령 실행 시, 메뉴가 자동으로 먼저 사라진 다음 캡처가 진행됨 (메뉴가 캡처 결과에 포함되지 않음).
 
 ---
 
@@ -233,8 +320,9 @@ mouse-noti/
 
 ---
 
-## 다음 단계 (Phase 2 예정)
+## 다음 단계
 
-- 키보드/마우스 단축키로 호출하는 라디얼 퀵메뉴
-- 메뉴 아이템 편집 GUI (앱 실행 / URL / 셸 명령)
-- 컨텍스트 인지 (최근 알림 있으면 알림 액션, 없으면 일반 런처)
+- macOS mixed-DPI 인디케이터 위치 정확도 개선
+- macOS 마우스 단축키 (NSEvent global monitor 기반 재구현, 현재 비활성)
+- Windows 라디얼 메뉴 + 알림 소스 정합성 점검
+- 자동 업데이트 (tauri-plugin-updater) — 배포 대상 늘어나면

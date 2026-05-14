@@ -7,6 +7,8 @@ type Props = {
   hovered: boolean;
   innerRadius: number;
   outerRadius: number;
+  baseFill: string;
+  hoverFill: string;
 };
 
 export default function Sector({
@@ -16,6 +18,8 @@ export default function Sector({
   hovered,
   innerRadius,
   outerRadius,
+  baseFill,
+  hoverFill,
 }: Props) {
   const sectorAngle = (2 * Math.PI) / total;
   const startAngle = -Math.PI / 2 + index * sectorAngle;
@@ -48,7 +52,7 @@ export default function Sector({
     <g style={{ transition: 'opacity 80ms ease-out' }}>
       <path
         d={path}
-        fill={hovered ? 'rgba(59,130,246,0.95)' : 'rgba(31,41,55,0.85)'}
+        fill={hovered ? hoverFill : baseFill}
         stroke={hovered ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.2)'}
         strokeWidth={hovered ? 2 : 1}
       />

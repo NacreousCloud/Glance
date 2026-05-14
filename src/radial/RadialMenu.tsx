@@ -3,8 +3,9 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { sectorAt } from './geometry';
 import Sector from './Sector';
+import { hexToRgba } from './color';
 import { listMenuItems, execMenuItem } from './api';
-import { getSettings } from '../settings/api';
+import { getSettings, DEFAULT_RADIAL_THEME, type RadialTheme } from '../settings/api';
 import type { MenuItem } from '../types';
 
 const CENTER = 200;
@@ -32,16 +33,23 @@ export default function RadialMenu() {
   const ignoreMouseUntil = useRef(0);
 
   const [closeOnLeave, setCloseOnLeave] = useState(false);
+  const [theme, setTheme] = useState<RadialTheme>(DEFAULT_RADIAL_THEME);
 
   useEffect(() => {
     listMenuItems().then(setItems);
     getSettings()
-      .then((s) => setCloseOnLeave(!!s.radial_close_on_leave))
+      .then((s) => {
+        setCloseOnLeave(!!s.radial_close_on_leave);
+        if (s.radial_theme) setTheme(s.radial_theme);
+      })
       .catch(() => {});
     const un = listen<ShowPayload>('radial:show', (e) => {
       listMenuItems().then(setItems);
       getSettings()
-        .then((s) => setCloseOnLeave(!!s.radial_close_on_leave))
+        .then((s) => {
+          setCloseOnLeave(!!s.radial_close_on_leave);
+          if (s.radial_theme) setTheme(s.radial_theme);
+        })
         .catch(() => {});
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
@@ -105,7 +113,7 @@ export default function RadialMenu() {
   // through Tauri's transparent macOS window, so we listen at the document
   // level instead and compute the sector from raw clientX/Y.
   useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
+    const onMouseDown = async (e: MouseEvent) => {
       if (Date.now() < ignoreMouseUntil.current) return;
       const dx = e.clientX - CENTER;
       const dy = e.clientY - CENTER;
@@ -116,8 +124,17 @@ export default function RadialMenu() {
         return;
       }
       const item = filtered[sector];
-      if (item) execMenuItem(item.id);
-      invoke('hide_radial').catch(() => {});
+      if (!item) {
+        invoke('hide_radial').catch(() => {});
+        return;
+      }
+      // Hide the radial window BEFORE running the action. Otherwise
+      // screen-capturing commands (e.g. `screencapture`) include the
+      // overlay in their output. The 80ms delay gives macOS compositor a
+      // frame to flush the NSWindow orderOut.
+      await invoke('hide_radial').catch(() => {});
+      await new Promise((r) => setTimeout(r, 80));
+      execMenuItem(item.id).catch(() => {});
     };
     const onMouseMove = (e: MouseEvent) => {
       const dx = e.clientX - CENTER;
@@ -141,16 +158,15 @@ export default function RadialMenu() {
       height={CENTER * 2}
       style={{ position: 'fixed', top: 0, left: 0, pointerEvents: 'auto' }}
     >
-      {/* Semi-opaque backdrop. macOS transparent windows pass clicks
-          through on alpha=0 areas, so a slight dim both gives a modal
-          feel and ensures clicks in the 4 corners outside the pie are
-          captured by the webview. */}
+      {/* Backdrop. Theme-driven opacity. At 0 the rect is fully
+          transparent → macOS passes corner clicks through to the app
+          below, and menu close-out happens via window blur listener. */}
       <rect
         x={0}
         y={0}
         width={CENTER * 2}
         height={CENTER * 2}
-        fill="rgba(0,0,0,0.18)"
+        fill={hexToRgba(theme.backdrop_color, theme.backdrop_opacity)}
       />
       <g transform={`translate(${CENTER} ${CENTER})`}>
         {filtered.map((item, i) => (
@@ -162,12 +178,18 @@ export default function RadialMenu() {
             hovered={hovered === i}
             innerRadius={INNER}
             outerRadius={OUTER}
+            baseFill={hexToRgba(theme.sector_color, theme.sector_opacity)}
+            hoverFill={hexToRgba(theme.hover_color, 0.95)}
           />
         ))}
         {/* Central cancel button */}
         <circle
           r={INNER}
-          fill={centerHovered ? 'rgba(239,68,68,0.9)' : 'rgba(17,24,39,0.9)'}
+          fill={
+            centerHovered
+              ? 'rgba(239,68,68,0.9)'
+              : hexToRgba(theme.center_color, 0.9)
+          }
           stroke="rgba(255,255,255,0.25)"
           strokeWidth={1}
         />
