@@ -4,6 +4,11 @@ on:
   push:
     tags: ['v*']
 
+permissions:
+  # Required so softprops/action-gh-release can create the GitHub release
+  # and upload the DMG / MSI artifacts.
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -25,16 +30,12 @@ jobs:
         shell: bash
         run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - run: pnpm install --frozen-lockfile
+      # Builds unsigned bundles. The previous setup unconditionally
+      # exported empty APPLE_CERTIFICATE / signing secrets which caused
+      # the macOS bundler to attempt (and fail) a `security import`. Add
+      # the env block back, gated behind a real secret, once
+      # notarization is set up.
       - name: Build Tauri bundle
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm tauri build
       - name: Upload artifacts
         uses: softprops/action-gh-release@v2
