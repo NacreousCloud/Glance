@@ -38,8 +38,10 @@ function clamp(payload: Payload): { x: number; y: number } {
   return { x, y };
 }
 
+type ActiveIndicator = Payload & { expire_at: number };
+
 export default function Overlay() {
-  const [indicators, setIndicators] = useState<Payload[]>([]);
+  const [indicators, setIndicators] = useState<ActiveIndicator[]>([]);
 
   useEffect(() => {
     let unlisten: UnlistenFn | undefined;
@@ -47,19 +49,30 @@ export default function Overlay() {
     const setup = async () => {
       unlisten = await listen<Payload>('noti:show', (e) => {
         const payload = e.payload;
-        setIndicators((prev) => [...prev, payload]);
-
         const duration = payload.style === 'persistent_badge' ? 5000 : 900;
-        window.setTimeout(() => {
-          setIndicators((prev) => prev.filter((i) => i.id !== payload.id));
-        }, duration);
+        setIndicators((prev) => [
+          ...prev,
+          { ...payload, expire_at: Date.now() + duration },
+        ]);
       });
     };
 
     setup();
 
+    // Sweep expired indicators every 200ms. Using an interval instead of
+    // setTimeout per indicator because macOS may throttle setTimeout on
+    // a hidden / occluded webview, leaving stale entries on screen.
+    const sweep = window.setInterval(() => {
+      const now = Date.now();
+      setIndicators((prev) => {
+        const next = prev.filter((p) => p.expire_at > now);
+        return next.length === prev.length ? prev : next;
+      });
+    }, 200);
+
     return () => {
       if (unlisten) unlisten();
+      window.clearInterval(sweep);
     };
   }, []);
 
