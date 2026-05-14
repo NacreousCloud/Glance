@@ -7,7 +7,9 @@ import { listMenuItems, execMenuItem } from './api';
 import type { MenuItem } from '../types';
 
 const CENTER = 200;
-const INNER = 50;
+// Pie design: wedges reach close to the center. INNER also acts as the
+// hit-region radius for the central cancel button.
+const INNER = 28;
 const OUTER = 180;
 
 type ShowPayload = {
@@ -20,6 +22,7 @@ type ShowPayload = {
 export default function RadialMenu() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [centerHovered, setCenterHovered] = useState(false);
   const [menuMode, setMenuMode] = useState<string>('all');
   const [recentAppName, setRecentAppName] = useState<string | null>(null);
 
@@ -54,11 +57,14 @@ export default function RadialMenu() {
     const rect = e.currentTarget.getBoundingClientRect();
     const dx = e.clientX - rect.left - CENTER;
     const dy = e.clientY - rect.top - CENTER;
+    const r = Math.sqrt(dx * dx + dy * dy);
+    setCenterHovered(r < INNER);
     setHovered(sectorAt(dx, dy, filtered.length, INNER, OUTER));
   };
 
   const onClick = () => {
-    if (hovered === null) {
+    // Center circle or outside the pie → close without executing.
+    if (centerHovered || hovered === null) {
       getCurrentWebviewWindow().hide();
       return;
     }
@@ -89,10 +95,28 @@ export default function RadialMenu() {
             outerRadius={OUTER}
           />
         ))}
-        {recentAppName && menuMode === 'notification' && (
+        {/* Central cancel button */}
+        <circle
+          r={INNER}
+          fill={centerHovered ? 'rgba(239,68,68,0.9)' : 'rgba(17,24,39,0.9)'}
+          stroke="rgba(255,255,255,0.25)"
+          strokeWidth={1}
+        />
+        <text
+          x={0}
+          y={0}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="white"
+          fontSize={14}
+          pointerEvents="none"
+        >
+          {centerHovered ? '×' : ''}
+        </text>
+        {recentAppName && menuMode === 'notification' && !centerHovered && (
           <text
             x={0}
-            y={0}
+            y={INNER + 14}
             textAnchor="middle"
             dominantBaseline="middle"
             fill="white"
