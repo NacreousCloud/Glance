@@ -21,6 +21,9 @@ jobs:
         with:
           toolchain: stable
           cache-workspaces: src-tauri
+      - name: Prepend cargo bin to PATH
+        shell: bash
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - run: pnpm install --frozen-lockfile
       - name: Build Tauri bundle
         env:

@@ -22,6 +22,13 @@ jobs:
         with:
           toolchain: stable
           cache-workspaces: src-tauri
+      # The macos-14 image ships with a `rustup-init` shim in /usr/local/bin
+      # that pre-empts the rustup-managed cargo. Prepend ~/.cargo/bin so
+      # subsequent `cargo` / `rustup` invocations resolve to the toolchain
+      # the action just installed.
+      - name: Prepend cargo bin to PATH
+        shell: bash
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - run: pnpm install --frozen-lockfile
       - name: Frontend tests
         run: pnpm test:run
