@@ -23,7 +23,15 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     fn true_command_runs() {
         run("/usr/bin/true", &[]).unwrap();
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn cmd_command_runs() {
+        // `cmd /c exit 0` — Windows equivalent of `/usr/bin/true`.
+        run("cmd", &["/c".into(), "exit".into(), "0".into()]).unwrap();
     }
 }
