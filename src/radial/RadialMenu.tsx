@@ -4,20 +4,11 @@ import { invoke } from '@tauri-apps/api/core';
 import { sectorAt } from './geometry';
 import Sector from './Sector';
 import { listMenuItems, execMenuItem } from './api';
+import { getSettings } from '../settings/api';
 import type { MenuItem } from '../types';
 
-const radialLog = (msg: string) => {
-  invoke<void>('radial_log', { msg })
-    .then(() => {
-      // Blue tint = invoke succeeded
-      document.body.style.background = 'rgba(0, 0, 255, 0.35)';
-    })
-    .catch((err) => {
-      // Red tint = invoke rejected
-      document.body.style.background = 'rgba(255, 0, 0, 0.35)';
-      document.title = `RADIAL_INVOKE_FAIL: ${String(err).slice(0, 80)}`;
-    });
-};
+const radialLog = (msg: string) =>
+  invoke<void>('radial_log', { msg }).catch(() => {});
 
 const CENTER = 200;
 // Pie design: wedges reach close to the center. INNER also acts as the
@@ -43,16 +34,18 @@ export default function RadialMenu() {
   // immediately close the just-opened menu.
   const ignoreMouseUntil = useRef(0);
 
+  const [closeOnLeave, setCloseOnLeave] = useState(false);
+
   useEffect(() => {
-    // VISUAL DIAGNOSTIC: green tint = RadialMenu mounted + useEffect ran.
-    document.body.style.background = 'rgba(0, 255, 0, 0.35)';
-    document.documentElement.style.background = 'rgba(0, 255, 0, 0.35)';
-    document.title = `RADIAL_MOUNTED_${Date.now()}`;
-    radialLog('first useEffect entered');
     listMenuItems().then(setItems);
+    getSettings()
+      .then((s) => setCloseOnLeave(!!s.radial_close_on_leave))
+      .catch(() => {});
     const un = listen<ShowPayload>('radial:show', (e) => {
-      radialLog('radial:show event received in webview');
       listMenuItems().then(setItems);
+      getSettings()
+        .then((s) => setCloseOnLeave(!!s.radial_close_on_leave))
+        .catch(() => {});
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
       // Short warm-up to absorb phantom mousedown from focus change.
@@ -87,6 +80,18 @@ export default function RadialMenu() {
         : items.filter((it) => it.tags.includes(menuMode)),
     [items, menuMode]
   );
+
+  // Optional: close when cursor leaves the radial window. Gated by user
+  // setting because it is non-standard radial UX and can be twitchy.
+  useEffect(() => {
+    if (!closeOnLeave) return;
+    const onLeave = () => {
+      if (Date.now() < ignoreMouseUntil.current) return;
+      invoke('hide_radial').catch(() => {});
+    };
+    document.addEventListener('mouseleave', onLeave);
+    return () => document.removeEventListener('mouseleave', onLeave);
+  }, [closeOnLeave]);
 
   // Window-level mousedown handler. SVG onClick was not firing reliably
   // through Tauri's transparent macOS window, so we listen at the document

@@ -2,7 +2,13 @@ import { invoke } from '@tauri-apps/api/core';
 import type { HotkeyBinding, MenuItem } from '../types';
 
 export type IndicatorStyle = 'ring_pulse' | 'icon_badge' | 'persistent_badge';
-export type Settings = { indicator_style: IndicatorStyle; autostart: boolean };
+export type Settings = {
+  indicator_style: IndicatorStyle;
+  autostart: boolean;
+  menu_items?: MenuItem[];
+  hotkey_bindings?: HotkeyBinding[];
+  radial_close_on_leave: boolean;
+};
 export type PermissionStatus = {
   accessibility_ok: boolean;
   notification_listener_ok: boolean;

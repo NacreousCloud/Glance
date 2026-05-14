@@ -68,6 +68,11 @@ pub struct Settings {
     pub menu_items: Vec<MenuItem>,
     #[serde(default)]
     pub hotkey_bindings: Vec<HotkeyBinding>,
+    /// When true, the radial menu auto-closes the moment the cursor leaves
+    /// the menu window. Default false (close requires explicit click /
+    /// ESC / focus-loss).
+    #[serde(default)]
+    pub radial_close_on_leave: bool,
 }
 
 impl Default for Settings {
@@ -77,6 +82,7 @@ impl Default for Settings {
             autostart: false,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
+            radial_close_on_leave: false,
         }
     }
 }
@@ -141,6 +147,7 @@ mod tests {
             autostart: true,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
+            radial_close_on_leave: false,
         };
         store.save(&s).unwrap();
         let loaded = store.load();
@@ -157,6 +164,7 @@ mod tests {
             autostart: false,
             menu_items: Vec::new(),
             hotkey_bindings: Vec::new(),
+            radial_close_on_leave: false,
         };
         store.save(&good).unwrap();
         std::fs::write(&path, "GARBAGE").unwrap();
@@ -188,6 +196,7 @@ mod tests {
                 trigger: HotkeyTrigger::Keyboard { accelerator: "CommandOrControl+Shift+M".into() },
                 menu_mode: "all".into(),
             }],
+            radial_close_on_leave: false,
         };
         let toml = toml::to_string_pretty(&s).unwrap();
         let parsed: Settings = toml::from_str(&toml).unwrap();
