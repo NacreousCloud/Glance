@@ -4,7 +4,7 @@ use super::{NotiEvent, NotificationSource, Publisher};
 use parking_lot::Mutex;
 use std::sync::Arc;
 use windows::{
-    Foundation::TypedEventHandler,
+    Foundation::{EventRegistrationToken, TypedEventHandler},
     UI::Notifications::{
         KnownNotificationBindings,
         Management::{UserNotificationListener, UserNotificationListenerAccessStatus},
@@ -13,7 +13,7 @@ use windows::{
 };
 
 pub struct WindowsNotiSource {
-    token: Arc<Mutex<Option<i64>>>,
+    token: Arc<Mutex<Option<EventRegistrationToken>>>,
 }
 
 impl WindowsNotiSource {
