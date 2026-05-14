@@ -1,6 +1,7 @@
 use crate::action::ActionRunner;
 use crate::settings::{HotkeyBinding, MenuItem, Settings, SettingsStore};
 use std::sync::Arc;
+use tauri::Manager;
 
 #[tauri::command]
 pub fn radial_log(msg: String) {
