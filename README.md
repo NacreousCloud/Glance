@@ -1,10 +1,12 @@
-# mouse-noti
+# Glance
 
-데스크톱 알림이 발생할 때 마우스 커서 위치에 시각적 인디케이터를 표시하는 macOS + Windows 앱.
+데스크톱 알림이 발생할 때 마우스 커서 위치에 시각적 인디케이터를 표시하고, 커서 중심에서 라디얼 퀵메뉴를 띄우는 macOS + Windows 앱.
+
+이전 이름: `mouse-noti` (v0.4.0부터 Glance로 변경).
 
 ## 현재 상태
 
-**v0.3.5** — Phase 1 (알림 인디케이터) + Phase 2 (라디얼 퀵메뉴) 출시.
+**v0.4.0** — Phase 1 (알림 인디케이터) + Phase 2 (라디얼 퀵메뉴) 출시. 프로젝트 이름 `mouse-noti` → `Glance` 변경.
 
 - 알림 인디케이터 3종 (Ring Pulse / Icon Badge / Persistent Badge)
 - 라디얼 퀵메뉴 (커서 중심 부채꼴, 키보드 단축키 호출)
@@ -30,7 +32,7 @@
 - Xcode Command Line Tools: `xcode-select --install`
 - **권한**: 알림 인디케이터 자체는 CGWindowList 폴링으로 동작하므로 Accessibility 권한 불필요. Screen Recording 권한도 불필요 (window title은 읽지 않음). 첫 실행 시 권한 다이얼로그가 뜨더라도 알림 인디케이터 동작과는 무관.
   - Accessibility는 향후 Phase 2 (라디얼 메뉴 단축키, 추가 hooking)에서 사용 예정. 미리 부여해두면 좋음:
-    - 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → mouse-noti 토글 ON.
+    - 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용 → Glance 토글 ON.
     - 권한 변경 후 앱 재시작 필요.
 
 ### Windows
@@ -67,7 +69,7 @@ pnpm tauri dev
 3. 트레이 아이콘이 menubar(macOS) / system tray(Windows)에 표시됨
 4. macOS는 첫 실행 시 Accessibility 권한 다이얼로그 등장
 
-종료: 트레이 아이콘 우클릭 → `Quit mouse-noti`.
+종료: 트레이 아이콘 우클릭 → `Quit Glance`.
 
 ### 2. mock-os 기능 켜고 개발 모드
 
@@ -103,7 +105,7 @@ pnpm tauri build --debug      # 디버그 심볼 포함 빌드
 ```
 
 산출물 위치:
-- 바이너리: `src-tauri/target/release/mouse-noti`
+- 바이너리: `src-tauri/target/release/glance`
 - macOS DMG: `src-tauri/target/release/bundle/dmg/*.dmg`
 - Windows MSI: `src-tauri/target/release/bundle/msi/*.msi`
 
@@ -115,22 +117,22 @@ pnpm tauri build --debug      # 디버그 심볼 포함 빌드
 
 ```bash
 # 기존 인스턴스 종료
-pkill -f "target/release/mouse-noti"
+pkill -f "target/release/glance"
 
 # 포그라운드 (로그 보임)
-./src-tauri/target/release/mouse-noti
+./src-tauri/target/release/glance
 
 # 백그라운드 + 로그 파일
-./src-tauri/target/release/mouse-noti > /tmp/mouse-noti.log 2>&1 &
+./src-tauri/target/release/glance > /tmp/glance.log 2>&1 &
 
 # 로그 레벨 조정
-RUST_LOG=mouse_noti=debug ./src-tauri/target/release/mouse-noti
+RUST_LOG=glance=debug ./src-tauri/target/release/glance
 ```
 
 dev 모드와 다른 점:
 - HMR 없음. 프론트엔드 변경 시 `pnpm tauri build --no-bundle` 재실행.
 - 첫 실행 시 권한 다이얼로그가 dev 빌드와 별도 항목으로 뜸 (바이너리 해시가 다름).
-- 트레이 아이콘 우클릭 → `Quit mouse-noti` 로 종료.
+- 트레이 아이콘 우클릭 → `Quit Glance` 로 종료.
 
 ### 5. 변경된 백엔드 즉시 반영하는 가장 빠른 흐름
 
@@ -138,8 +140,8 @@ Rust 코드만 수정 후:
 
 ```bash
 pnpm tauri build --no-bundle && \
-  pkill -f "target/release/mouse-noti"; \
-  ./src-tauri/target/release/mouse-noti > /tmp/mouse-noti.log 2>&1 &
+  pkill -f "target/release/glance"; \
+  ./src-tauri/target/release/glance > /tmp/glance.log 2>&1 &
 ```
 
 빌드 실패 시 `pkill` 안 함 → 기존 인스턴스 유지. 빌드 성공 시 교체.
@@ -156,7 +158,12 @@ pnpm tauri build --no-bundle && \
    - **Icon Badge**: 커서 옆에 앱 이름 첫 글자가 적힌 배지가 잠깐 표시
    - **Persistent Badge**: 앱 이름이 적힌 배지가 5초간 유지
 
-설정은 즉시 저장됨 (`~/Library/Application Support/dev.mouse-noti.app/config.toml` on macOS, `%APPDATA%\dev.mouse-noti.app\config.toml` on Windows).
+설정은 즉시 저장됨:
+
+- macOS: `~/Library/Application Support/dev.glance.glance/config.toml`
+- Windows: `%APPDATA%\dev\glance\glance\config\config.toml`
+
+v0.3.x (mouse-noti) 시절 config는 자동으로 fallback 로드 → 첫 저장 시 새 경로로 이전.
 
 ### 권한 상태 확인
 
@@ -220,7 +227,7 @@ Settings → **Radial appearance** 섹션:
 
 #### 보안 주의
 
-- `run_shell` 액션은 mouse-noti 프로세스 권한으로 실행. `confirm` 옵션 켜두기 권장.
+- `run_shell` 액션은 Glance 프로세스 권한으로 실행. `confirm` 옵션 켜두기 권장.
 - 스크린샷 (`screencapture`) 같은 화면 캡처 명령은 macOS Screen Recording 권한이 필요. 권한 부여 후 앱 재시작.
 
 ### 에러 알림
@@ -254,7 +261,7 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛 (22 tests)
 ### macOS: 알림이 와도 인디케이터가 안 뜸
 
 - Accessibility 권한 확인 (시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용)
-- 권한 부여 후에도 안 되면 앱을 완전히 종료 후 재실행 (`Quit mouse-noti` 후 다시 실행)
+- 권한 부여 후에도 안 되면 앱을 완전히 종료 후 재실행 (`Quit Glance` 후 다시 실행)
 - 권한 토글을 OFF → ON으로 한 번 더 끄고 켜기 (macOS 캐시 이슈)
 
 ### Windows: PermissionPanel이 계속 "Required" 표시
@@ -293,7 +300,7 @@ pnpm install
 ## 프로젝트 구조
 
 ```
-mouse-noti/
+glance/
 ├── src-tauri/                # Rust 백엔드 (Tauri)
 │   ├── src/
 │   │   ├── lib.rs            # 진입점, 빌더 체인

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "mouse-noti",
-  "version": "0.3.6",
-  "identifier": "dev.mouse-noti.app",
+  "productName": "Glance",
+  "version": "0.4.0",
+  "identifier": "dev.glance.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "settings",
-        "title": "mouse-noti — Settings",
+        "title": "Glance — Settings",
         "width": 720,
         "height": 540,
         "visible": false,

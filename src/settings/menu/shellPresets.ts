@@ -49,7 +49,7 @@ export const SHELL_PRESETS: ShellPreset[] = [
     ],
     confirm: false,
     description:
-      'Requires Screen Recording permission for mouse-noti (System Settings → Privacy & Security → Screen Recording). Without it, only the desktop wallpaper is captured — windows appear blank.',
+      'Requires Screen Recording permission for Glance (System Settings → Privacy & Security → Screen Recording). Without it, only the desktop wallpaper is captured — windows appear blank.',
   },
   {
     id: 'music-playpause',

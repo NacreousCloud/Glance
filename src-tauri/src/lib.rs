@@ -79,7 +79,7 @@ pub fn run() {
     let _ = tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "mouse_noti=info".into()),
+                .unwrap_or_else(|_| "glance=info".into()),
         )
         .try_init();
 

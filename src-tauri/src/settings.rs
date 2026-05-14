@@ -134,16 +134,32 @@ impl Default for Settings {
 
 pub struct SettingsStore {
     path: PathBuf,
+    legacy: Vec<PathBuf>,
 }
 
 impl SettingsStore {
     pub fn new(path: impl Into<PathBuf>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            legacy: legacy_config_paths(),
+        }
+    }
+
+    /// Constructor for tests: skips legacy fallback so a developer's real
+    /// mouse-noti config on disk does not bleed into unit tests.
+    #[cfg(test)]
+    pub fn new_isolated(path: impl Into<PathBuf>) -> Self {
+        Self {
+            path: path.into(),
+            legacy: Vec::new(),
+        }
     }
 
     pub fn load(&self) -> Settings {
         let backup = self.path.with_extension("toml.bak");
-        for candidate in [&self.path, &backup] {
+        let mut candidates: Vec<PathBuf> = vec![self.path.clone(), backup];
+        candidates.extend(self.legacy.iter().cloned());
+        for candidate in &candidates {
             if let Ok(text) = std::fs::read_to_string(candidate) {
                 if let Ok(s) = toml::from_str::<Settings>(&text) {
                     return s;
@@ -173,8 +189,22 @@ impl SettingsStore {
 
 pub fn default_config_path() -> PathBuf {
     let proj =
-        directories::ProjectDirs::from("dev", "mouse-noti", "mouse-noti").expect("project dirs");
+        directories::ProjectDirs::from("dev", "glance", "glance").expect("project dirs");
     proj.config_dir().join("config.toml")
+}
+
+/// Pre-rebrand config locations. SettingsStore::load() tries these as a
+/// fallback so existing users keep their settings after the mouse-noti →
+/// Glance rename. The first save to the new location supersedes them.
+fn legacy_config_paths() -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    if let Some(proj) =
+        directories::ProjectDirs::from("dev", "mouse-noti", "mouse-noti")
+    {
+        out.push(proj.config_dir().join("config.toml"));
+        out.push(proj.config_dir().join("config.toml.bak"));
+    }
+    out
 }
 
 #[cfg(test)]
@@ -186,7 +216,7 @@ mod tests {
     fn save_then_load_roundtrip() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("config.toml");
-        let store = SettingsStore::new(&path);
+        let store = SettingsStore::new_isolated(&path);
         let s = Settings {
             indicator_style: IndicatorStyle::IconBadge,
             autostart: true,
@@ -205,7 +235,7 @@ mod tests {
     fn corrupt_file_falls_back_to_backup() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("config.toml");
-        let store = SettingsStore::new(&path);
+        let store = SettingsStore::new_isolated(&path);
         let good = Settings {
             indicator_style: IndicatorStyle::PersistentBadge,
             autostart: false,
@@ -224,7 +254,7 @@ mod tests {
     #[test]
     fn missing_file_returns_default() {
         let dir = tempdir().unwrap();
-        let store = SettingsStore::new(dir.path().join("nope.toml"));
+        let store = SettingsStore::new_isolated(dir.path().join("nope.toml"));
         assert_eq!(store.load(), Settings::default());
     }
 

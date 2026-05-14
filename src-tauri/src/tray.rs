@@ -5,7 +5,7 @@ use tauri::{
 };
 
 pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
-    let quit = MenuItem::with_id(app, "quit", "Quit mouse-noti", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit Glance", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "Settings…", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&settings, &quit])?;
 
