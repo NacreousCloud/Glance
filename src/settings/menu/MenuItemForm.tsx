@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
 import type { MenuItem, Action } from '../../types';
 import IconPicker from './IconPicker';
 
@@ -44,13 +45,43 @@ export default function MenuItemForm({ initial, onSave, onCancel }: Props) {
         </select>
       </div>
       {item.action.kind === 'launch_app' && (
-        <input
-          type="text"
-          placeholder="/Applications/Slack.app"
-          className="border rounded px-2 py-1 w-full"
-          value={item.action.path}
-          onChange={(e) => updateAction({ kind: 'launch_app', path: e.target.value })}
-        />
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="/Applications/Slack.app"
+            className="border rounded px-2 py-1 flex-1"
+            value={item.action.path}
+            onChange={(e) => updateAction({ kind: 'launch_app', path: e.target.value })}
+          />
+          <button
+            type="button"
+            className="px-3 py-1 bg-gray-100 rounded text-sm"
+            onClick={async () => {
+              const picked = await open({
+                multiple: false,
+                directory: false,
+                filters: [{ name: 'Applications', extensions: ['app'] }],
+                defaultPath: '/Applications',
+              });
+              if (typeof picked === 'string') {
+                const itemLabel = item.label.trim();
+                const fallbackLabel = picked
+                  .split('/')
+                  .pop()
+                  ?.replace(/\.app$/i, '')
+                  ?? '';
+                setItem((prev) => ({
+                  ...prev,
+                  action: { kind: 'launch_app', path: picked },
+                  // Auto-fill label from app name if user hasn't set one.
+                  label: itemLabel && itemLabel !== 'New item' ? itemLabel : fallbackLabel,
+                }));
+              }
+            }}
+          >
+            Browse…
+          </button>
+        </div>
       )}
       {item.action.kind === 'open_url' && (
         <input

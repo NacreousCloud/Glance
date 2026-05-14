@@ -147,6 +147,7 @@ pub fn run() {
             None,
         ))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .manage(bus.clone())
         .manage(store.clone())
         .manage(active_source)
