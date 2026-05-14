@@ -2,6 +2,10 @@ pub mod keyboard;
 #[cfg(target_os = "macos")]
 pub mod mouse;
 
+#[cfg(target_os = "windows")]
+#[path = "mouse_windows.rs"]
+pub mod mouse;
+
 use crate::settings::HotkeyBinding;
 use parking_lot::Mutex;
 use std::sync::Arc;

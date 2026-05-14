@@ -279,12 +279,11 @@ pub fn run() {
 
             start_os_source(app.handle(), &bus);
 
-            // macOS mouse hotkey listener (NSEvent global monitor).
-            // Requires Accessibility permission. The monitor handle is
-            // intentionally leaked: it must live for the process lifetime,
-            // and `removeMonitor:` requires the main thread which is not
-            // guaranteed at Tauri state-drop time.
-            #[cfg(target_os = "macos")]
+            // Mouse hotkey listener. macOS: NSEvent global monitor (needs
+            // Accessibility). Windows: WH_MOUSE_LL low-level hook on a
+            // dedicated thread. Monitor is intentionally leaked — it must
+            // live for the process lifetime and the OS cleans up on exit.
+            #[cfg(any(target_os = "macos", target_os = "windows"))]
             {
                 let monitor = hotkey::mouse::MouseMonitor::start(
                     shared_bindings.clone(),
