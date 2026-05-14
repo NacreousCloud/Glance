@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { MenuItem } from '../types';
+import type { HotkeyBinding, MenuItem } from '../types';
 
 export type IndicatorStyle = 'ring_pulse' | 'icon_badge' | 'persistent_badge';
 export type Settings = { indicator_style: IndicatorStyle; autostart: boolean };
@@ -33,3 +33,9 @@ export const reorderMenuItems = (ids: string[]) =>
   invoke<void>('reorder_menu_items', { ids });
 export const extractAppIcon = (path: string) =>
   invoke<string>('extract_app_icon', { path });
+
+export const listHotkeyBindings = () => invoke<HotkeyBinding[]>('list_hotkey_bindings');
+export const upsertHotkeyBinding = (binding: HotkeyBinding) =>
+  invoke<void>('upsert_hotkey_binding', { binding });
+export const deleteHotkeyBinding = (bindingId: string) =>
+  invoke<void>('delete_hotkey_binding', { bindingId });

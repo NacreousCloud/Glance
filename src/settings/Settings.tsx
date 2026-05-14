@@ -4,6 +4,7 @@ import PermissionPanel from './PermissionPanel';
 import AutoStartToggle from './AutoStartToggle';
 import NotificationLog from './NotificationLog';
 import MenuEditor from './menu/MenuEditor';
+import HotkeyEditor from './hotkey/HotkeyEditor';
 import { getSettings, setSettings, type Settings as S } from './api';
 
 export default function Settings() {
@@ -46,6 +47,8 @@ export default function Settings() {
       />
       <hr className="border-gray-100" />
       <MenuEditor />
+      <hr className="border-gray-100" />
+      <HotkeyEditor />
     </div>
   );
 }
