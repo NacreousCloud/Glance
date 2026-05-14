@@ -24,6 +24,10 @@ pub async fn show<R: Runtime>(app: &AppHandle<R>, bus: &EventBus, menu_mode: &st
         return;
     };
     tracing::info!(?pos, "radial::show: window found, cursor ok");
+    match win.url() {
+        Ok(url) => tracing::info!(%url, "radial::show: current webview url"),
+        Err(e) => tracing::warn!(error = %e, "radial::show: win.url() failed"),
+    }
 
     let scale = win.scale_factor().unwrap_or(1.0);
     let half_w = 200.0 * scale;
