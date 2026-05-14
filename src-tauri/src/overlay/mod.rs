@@ -4,8 +4,15 @@ pub mod display;
 use crate::event_bus::EventBus;
 use crate::settings::IndicatorStyle;
 use serde::Serialize;
+use std::hash::{Hash, Hasher};
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewWindow};
+
+fn hue_from_label(label: &str) -> u16 {
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    label.hash(&mut hasher);
+    (hasher.finish() % 360) as u16
+}
 
 #[derive(Serialize, Clone)]
 pub struct IndicatorPayload {
@@ -18,6 +25,7 @@ pub struct IndicatorPayload {
     pub viewport_h: f64,
     pub app_name: String,
     pub title: String,
+    pub color_hue: u16,
 }
 
 pub fn spawn<R: Runtime>(
@@ -118,6 +126,7 @@ pub fn spawn<R: Runtime>(
                 viewport_h: viewport_logical.1,
                 app_name: event.app_name.clone(),
                 title: event.title.clone(),
+                color_hue: hue_from_label(if event.app_name.is_empty() { &event.app_id } else { &event.app_name }),
             };
             match app.emit("noti:show", payload) {
                 Ok(()) => tracing::info!(
