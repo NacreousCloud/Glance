@@ -1,5 +1,8 @@
 pub mod keyboard;
-pub mod mouse;
+// Mouse hotkey listener (rdev-based) is disabled on macOS due to a
+// TSMGetInputSourceProperty main-thread assertion failure inside rdev's
+// keyboard conversion path. Tracked as a follow-up to re-implement via
+// NSEvent.addGlobalMonitorForEventsMatchingMask.
 
 use crate::settings::HotkeyBinding;
 use parking_lot::Mutex;
@@ -11,8 +14,6 @@ pub struct TriggerEvent {
     pub menu_mode: String,
 }
 
-/// Shared, mutable set of hotkey bindings.
-/// Live re-registration (Task 13) mutates this in place so the mouse
-/// listener thread and rebind drainer always see the latest set without
-/// restarting any listeners.
+/// Shared, mutable set of hotkey bindings. Mutated by CRUD commands; read
+/// by the keyboard rebind drainer on each rebind signal.
 pub type SharedBindings = Arc<Mutex<Vec<HotkeyBinding>>>;

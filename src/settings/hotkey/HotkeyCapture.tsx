@@ -55,7 +55,7 @@ export default function HotkeyCapture({ value, onChange }: Props) {
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
           type="button"
           className={`px-2 py-1 rounded ${mode === 'keyboard' ? 'bg-blue-100' : 'bg-gray-100'}`}
@@ -65,10 +65,11 @@ export default function HotkeyCapture({ value, onChange }: Props) {
         </button>
         <button
           type="button"
-          className={`px-2 py-1 rounded ${mode === 'mouse' ? 'bg-blue-100' : 'bg-gray-100'}`}
-          onClick={() => setMode('mouse')}
+          className="px-2 py-1 rounded bg-gray-50 text-gray-400 cursor-not-allowed"
+          disabled
+          title="Mouse hotkeys are temporarily disabled on macOS (rdev crash workaround). Coming back in a follow-up release."
         >
-          Mouse
+          Mouse (disabled)
         </button>
       </div>
       <div className="border rounded p-2 flex items-center justify-between">

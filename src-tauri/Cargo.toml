@@ -1,6 +1,6 @@
 [package]
 name = "mouse-noti"
-version = "0.3.0"
+version = "0.3.1"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -34,7 +34,6 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 directories = "5"
 uuid = { version = "1", features = ["v4"] }
 base64 = "0.22"
-rdev = "0.5"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5"

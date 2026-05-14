@@ -260,12 +260,11 @@ pub fn run() {
             start_os_source(app.handle(), &bus);
             tracing::info!("setup: noti source started");
 
-            // Mouse listener — spawned LAST. rdev::listen on macOS may interact
-            // poorly with NSApplication init when started too early in setup.
-            // Defer until the rest of the app is wired so any failure surfaces
-            // distinctly after all other init logs.
-            hotkey::mouse::spawn_listener(shared_bindings.clone(), hotkey_tx.clone());
-            tracing::info!("setup: mouse listener spawned");
+            // Mouse hotkey listener is disabled on macOS — rdev triggers a
+            // TSMGetInputSourceProperty main-thread assertion inside its
+            // keyboard conversion path on macOS 15+. Track follow-up with
+            // NSEvent.addGlobalMonitorForEventsMatchingMask. Mouse bindings
+            // saved in settings are preserved but never fire.
 
             tracing::info!("setup: done");
             Ok(())
