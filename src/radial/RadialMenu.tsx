@@ -84,13 +84,37 @@ export default function RadialMenu() {
   // Optional: close when cursor leaves the radial window. Gated by user
   // setting because it is non-standard radial UX and can be twitchy.
   useEffect(() => {
+    radialLog(`closeOnLeave effect: enabled=${closeOnLeave}`);
     if (!closeOnLeave) return;
-    const onLeave = () => {
+    const onLeaveDoc = (e: MouseEvent) => {
+      radialLog(
+        `mouseleave fired (document) target=${(e.target as Element)?.tagName ?? '?'} relatedTarget=${(e.relatedTarget as Element)?.tagName ?? 'null'}`
+      );
+      if (Date.now() < ignoreMouseUntil.current) {
+        radialLog('mouseleave ignored (warm-up)');
+        return;
+      }
+      invoke('hide_radial').catch(() => {});
+    };
+    const onMouseOutWindow = (e: MouseEvent) => {
+      // mouseout bubbles; check relatedTarget === null means cursor left
+      // the entire viewport.
+      if (e.relatedTarget !== null) return;
+      radialLog('mouseout (relatedTarget null) → treating as leave');
       if (Date.now() < ignoreMouseUntil.current) return;
       invoke('hide_radial').catch(() => {});
     };
-    document.addEventListener('mouseleave', onLeave);
-    return () => document.removeEventListener('mouseleave', onLeave);
+    document.addEventListener('mouseleave', onLeaveDoc);
+    document.documentElement.addEventListener('mouseleave', onLeaveDoc);
+    document.body.addEventListener('mouseleave', onLeaveDoc);
+    document.addEventListener('mouseout', onMouseOutWindow);
+    radialLog('mouseleave listeners attached (document + html + body + mouseout)');
+    return () => {
+      document.removeEventListener('mouseleave', onLeaveDoc);
+      document.documentElement.removeEventListener('mouseleave', onLeaveDoc);
+      document.body.removeEventListener('mouseleave', onLeaveDoc);
+      document.removeEventListener('mouseout', onMouseOutWindow);
+    };
   }, [closeOnLeave]);
 
   // Window-level mousedown handler. SVG onClick was not firing reliably
