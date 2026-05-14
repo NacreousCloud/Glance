@@ -85,6 +85,13 @@ pub async fn show<R: Runtime>(app: &AppHandle<R>, bus: &EventBus, menu_mode: &st
         Ok(()) => tracing::info!("radial::show: emitted radial:show event"),
         Err(e) => tracing::warn!(error = %e, "emit radial:show failed"),
     }
+
+    // Diagnostic: read back the webview title (set by frontend on invoke
+    // failure) so we can see invoke error text in the terminal.
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    if let Ok(title) = win.title() {
+        tracing::info!(%title, "radial::show: webview title after emit");
+    }
 }
 
 pub fn hide<R: Runtime>(app: &AppHandle<R>) {
