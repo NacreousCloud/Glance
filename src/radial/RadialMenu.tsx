@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { sectorAt } from './geometry';
 import Sector from './Sector';
 import { listMenuItems, execMenuItem } from './api';
 import type { MenuItem } from '../types';
+
+const radialLog = (msg: string) =>
+  invoke<void>('radial_log', { msg }).catch(() => {});
 
 const CENTER = 200;
 // Pie design: wedges reach close to the center. INNER also acts as the
@@ -66,35 +70,36 @@ export default function RadialMenu() {
   // level instead. Computes the sector from raw clientX/Y at click time.
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
+      radialLog(`mousedown clientX=${e.clientX} clientY=${e.clientY} button=${e.button}`);
       if (Date.now() < ignoreMouseUntil.current) {
-        console.debug('[radial] ignoring mousedown during warm-up');
+        radialLog('mousedown ignored (warm-up)');
         return;
       }
       const dx = e.clientX - CENTER;
       const dy = e.clientY - CENTER;
       const r = Math.sqrt(dx * dx + dy * dy);
       const sector = sectorAt(dx, dy, filtered.length, INNER, OUTER);
-      console.debug('[radial] window mousedown', {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        dx,
-        dy,
-        r,
-        sector,
-        itemCount: filtered.length,
-      });
+      radialLog(
+        `mousedown decision r=${r.toFixed(1)} sector=${sector} items=${filtered.length}`
+      );
       if (r < INNER || sector === null) {
+        radialLog('mousedown → hide (center or outside)');
         getCurrentWebviewWindow().hide();
         return;
       }
       const item = filtered[sector];
       if (item) {
+        radialLog(`mousedown → exec item ${item.id}`);
         execMenuItem(item.id);
       }
       getCurrentWebviewWindow().hide();
     };
+    radialLog('mousedown listener installed');
     window.addEventListener('mousedown', onMouseDown);
-    return () => window.removeEventListener('mousedown', onMouseDown);
+    return () => {
+      radialLog('mousedown listener removed');
+      window.removeEventListener('mousedown', onMouseDown);
+    };
   }, [filtered]);
 
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {

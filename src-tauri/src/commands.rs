@@ -2,6 +2,11 @@ use crate::action::ActionRunner;
 use crate::settings::{HotkeyBinding, MenuItem, Settings, SettingsStore};
 use std::sync::Arc;
 
+#[tauri::command]
+pub fn radial_log(msg: String) {
+    tracing::info!(target: "radial_js", "{}", msg);
+}
+
 #[derive(serde::Serialize)]
 pub struct PermissionStatus {
     pub accessibility_ok: bool,
