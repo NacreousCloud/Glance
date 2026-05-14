@@ -37,15 +37,15 @@
       {
         "label": "radial",
         "url": "index.html#/radial",
-        "transparent": false,
-        "decorations": true,
+        "transparent": true,
+        "decorations": false,
         "alwaysOnTop": true,
         "visibleOnAllWorkspaces": true,
         "skipTaskbar": true,
         "resizable": false,
         "fullscreen": false,
         "visible": false,
-        "shadow": true,
+        "shadow": false,
         "focus": true,
         "width": 400,
         "height": 400

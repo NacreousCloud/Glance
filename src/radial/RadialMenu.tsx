@@ -53,6 +53,14 @@ export default function RadialMenu() {
     };
   }, []);
 
+  const filtered = useMemo(
+    () =>
+      menuMode === 'all'
+        ? items
+        : items.filter((it) => it.tags.includes(menuMode)),
+    [items, menuMode]
+  );
+
   // Window-level mousedown handler. SVG onClick was not firing reliably
   // through Tauri's transparent macOS window, so we listen at the document
   // level instead. Computes the sector from raw clientX/Y at click time.
@@ -88,14 +96,6 @@ export default function RadialMenu() {
     window.addEventListener('mousedown', onMouseDown);
     return () => window.removeEventListener('mousedown', onMouseDown);
   }, [filtered]);
-
-  const filtered = useMemo(
-    () =>
-      menuMode === 'all'
-        ? items
-        : items.filter((it) => it.tags.includes(menuMode)),
-    [items, menuMode]
-  );
 
   const onMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
