@@ -4,6 +4,7 @@ pub mod commands;
 pub mod event_bus;
 pub mod noti;
 pub mod overlay;
+pub mod radial;
 pub mod settings;
 
 mod tray;
