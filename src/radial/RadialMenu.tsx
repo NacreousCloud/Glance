@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { sectorAt } from './geometry';
@@ -25,6 +25,10 @@ export default function RadialMenu() {
   const [centerHovered, setCenterHovered] = useState(false);
   const [menuMode, setMenuMode] = useState<string>('all');
   const [recentAppName, setRecentAppName] = useState<string | null>(null);
+  // Ignore mousedowns until this timestamp. Reset on every show event so a
+  // phantom mousedown fired by macOS during window focus/show does not
+  // immediately close the just-opened menu.
+  const ignoreMouseUntil = useRef(0);
 
   useEffect(() => {
     listMenuItems().then(setItems);
@@ -32,6 +36,10 @@ export default function RadialMenu() {
       listMenuItems().then(setItems);
       setMenuMode(e.payload.menu_mode);
       setRecentAppName(e.payload.recent_app_name);
+      // Give the OS ~250ms to settle before we accept clicks. Phantom
+      // mousedowns from focus changes / hotkey release should fall in
+      // this window.
+      ignoreMouseUntil.current = Date.now() + 250;
     });
     const escListener = (ev: KeyboardEvent) => {
       if (ev.key === 'Escape') {
@@ -50,6 +58,10 @@ export default function RadialMenu() {
   // level instead. Computes the sector from raw clientX/Y at click time.
   useEffect(() => {
     const onMouseDown = (e: MouseEvent) => {
+      if (Date.now() < ignoreMouseUntil.current) {
+        console.debug('[radial] ignoring mousedown during warm-up');
+        return;
+      }
       const dx = e.clientX - CENTER;
       const dy = e.clientY - CENTER;
       const r = Math.sqrt(dx * dx + dy * dy);
