@@ -1,4 +1,5 @@
 pub mod action;
+pub mod app_icon;
 pub mod commands;
 pub mod event_bus;
 pub mod noti;
@@ -14,8 +15,8 @@ use tauri::Manager;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use commands::{
-    delete_hotkey_binding, delete_menu_item, exec_menu_item, get_recent_events, get_settings,
-    list_hotkey_bindings, list_menu_items, permission_status, reorder_menu_items,
+    delete_hotkey_binding, delete_menu_item, exec_menu_item, extract_app_icon, get_recent_events,
+    get_settings, list_hotkey_bindings, list_menu_items, permission_status, reorder_menu_items,
     request_permission, set_settings, upsert_hotkey_binding, upsert_menu_item,
 };
 
@@ -124,7 +125,8 @@ pub fn run() {
                     list_hotkey_bindings,
                     upsert_hotkey_binding,
                     delete_hotkey_binding,
-                    exec_menu_item
+                    exec_menu_item,
+                    extract_app_icon
                 ]
             }
             #[cfg(not(feature = "mock-os"))]
@@ -142,7 +144,8 @@ pub fn run() {
                     list_hotkey_bindings,
                     upsert_hotkey_binding,
                     delete_hotkey_binding,
-                    exec_menu_item
+                    exec_menu_item,
+                    extract_app_icon
                 ]
             }
         })

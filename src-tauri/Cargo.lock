@@ -2148,6 +2148,7 @@ version = "0.2.0"
 dependencies = [
  "accessibility-sys",
  "anyhow",
+ "base64 0.22.1",
  "core-foundation",
  "core-graphics 0.24.0",
  "directories",

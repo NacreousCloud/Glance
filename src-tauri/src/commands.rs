@@ -195,3 +195,8 @@ pub fn exec_menu_item(
         .ok_or_else(|| format!("menu item not found: {item_id}"))?;
     ActionRunner::execute(&item.action).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn extract_app_icon(path: String) -> Result<String, String> {
+    crate::app_icon::load_app_icon_base64(&path).map_err(|e| e.to_string())
+}
