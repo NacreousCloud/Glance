@@ -303,10 +303,11 @@ pub fn run() {
                 std::mem::forget(monitor);
             }
 
-            // Hot-corner trigger — cross-platform cursor poll thread.
+            // Trackpad N-finger tap (macOS only, MultitouchSupport
+            // private framework). Dlopen'd on a dedicated thread.
+            #[cfg(target_os = "macos")]
             {
-                let monitor = hotkey::hot_corner::HotCornerMonitor::start(
-                    app.handle().clone(),
+                let monitor = hotkey::trackpad::TrackpadMonitor::start(
                     shared_bindings.clone(),
                     hotkey_tx.clone(),
                 );

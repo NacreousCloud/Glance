@@ -26,8 +26,8 @@ function formatTrigger(t: HotkeyTrigger): string {
     }
     case 'force_touch':
       return 'Force Touch';
-    case 'hot_corner':
-      return `Hot Corner: ${t.corner} (${t.radius_px}px)`;
+    case 'trackpad_tap':
+      return `${t.fingers}-finger tap (≤${t.max_duration_ms}ms)`;
   }
 }
 

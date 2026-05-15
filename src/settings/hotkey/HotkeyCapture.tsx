@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { Corner, HotkeyTrigger } from '../../types';
+import type { HotkeyTrigger } from '../../types';
 
 type Props = {
   value: HotkeyTrigger;
   onChange: (v: HotkeyTrigger) => void;
 };
 
-type Mode = 'keyboard' | 'mouse' | 'force_touch' | 'hot_corner';
+type Mode = 'keyboard' | 'mouse' | 'force_touch' | 'trackpad_tap';
 
 const MOD_CMD = 1, MOD_CTRL = 2, MOD_SHIFT = 4, MOD_ALT = 8;
 
@@ -16,13 +16,6 @@ const MOUSE_BUTTON_LABEL: Record<number, string> = {
   3: 'Middle',
   4: 'Back',
   5: 'Forward',
-};
-
-const CORNER_LABEL: Record<Corner, string> = {
-  top_left: 'Top Left',
-  top_right: 'Top Right',
-  bottom_left: 'Bottom Left',
-  bottom_right: 'Bottom Right',
 };
 
 function formatMouseBinding(button: number, mods: number): string {
@@ -91,12 +84,10 @@ export default function HotkeyCapture({ value, onChange }: Props) {
   const switchMode = (next: Mode) => {
     setMode(next);
     setCapturing(false);
-    // Initialize a sane default for the new trigger kind so the binding
-    // is immediately valid.
     if (next === 'force_touch' && value.kind !== 'force_touch') {
       onChange({ kind: 'force_touch' });
-    } else if (next === 'hot_corner' && value.kind !== 'hot_corner') {
-      onChange({ kind: 'hot_corner', corner: 'bottom_right', radius_px: 5 });
+    } else if (next === 'trackpad_tap' && value.kind !== 'trackpad_tap') {
+      onChange({ kind: 'trackpad_tap', fingers: 3, max_duration_ms: 200 });
     }
   };
 
@@ -120,8 +111,8 @@ export default function HotkeyCapture({ value, onChange }: Props) {
         return formatMouseBinding(value.button, value.modifiers);
       case 'force_touch':
         return 'Force Touch (macOS only)';
-      case 'hot_corner':
-        return `Hot Corner: ${CORNER_LABEL[value.corner]} (${value.radius_px}px)`;
+      case 'trackpad_tap':
+        return `${value.fingers}-finger tap (≤${value.max_duration_ms}ms)`;
     }
   })();
 
@@ -131,7 +122,7 @@ export default function HotkeyCapture({ value, onChange }: Props) {
         {tabBtn('keyboard', 'Keyboard')}
         {tabBtn('mouse', 'Mouse')}
         {tabBtn('force_touch', 'Force Touch')}
-        {tabBtn('hot_corner', 'Hot Corner')}
+        {tabBtn('trackpad_tap', 'Trackpad Tap')}
       </div>
 
       <div className="border rounded p-2 flex items-center justify-between gap-2">
@@ -189,48 +180,46 @@ export default function HotkeyCapture({ value, onChange }: Props) {
         </p>
       )}
 
-      {mode === 'hot_corner' && value.kind === 'hot_corner' && (
+      {mode === 'trackpad_tap' && value.kind === 'trackpad_tap' && (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500 w-16">Corner</span>
-            <select
-              className="border rounded px-2 py-1 text-sm flex-1"
-              value={value.corner}
-              onChange={(e) =>
-                onChange({
-                  ...value,
-                  corner: e.target.value as Corner,
-                })
-              }
-            >
-              <option value="top_left">Top Left</option>
-              <option value="top_right">Top Right</option>
-              <option value="bottom_left">Bottom Left</option>
-              <option value="bottom_right">Bottom Right</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-gray-500 w-16">Radius (px)</span>
+            <span className="text-gray-500 w-24">Fingers</span>
             <input
               type="number"
-              min={1}
-              max={100}
-              value={value.radius_px}
+              min={2}
+              max={5}
+              value={value.fingers}
               onChange={(e) =>
                 onChange({
                   ...value,
-                  radius_px: Math.max(1, Number(e.target.value) || 1),
+                  fingers: Math.min(5, Math.max(2, Number(e.target.value) || 3)),
+                })
+              }
+              className="border rounded px-2 py-1 w-16"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-500 w-24">Max duration</span>
+            <input
+              type="number"
+              min={50}
+              max={1000}
+              step={10}
+              value={value.max_duration_ms}
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  max_duration_ms: Math.max(50, Number(e.target.value) || 200),
                 })
               }
               className="border rounded px-2 py-1 w-20"
             />
-            <span className="text-gray-400">
-              Cursor must enter within this distance of the corner.
-            </span>
+            <span className="text-gray-400">ms</span>
           </div>
-          <p className="text-xs text-gray-400">
-            Fires once on cursor entry; the cursor must leave the zone
-            before it can re-trigger. Cross-platform.
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+            ⚠️ Uses Apple's private <code>MultitouchSupport.framework</code>.
+            Works on built-in trackpads and Magic Trackpad. May break on
+            future macOS releases. Not App-Store-distributable.
           </p>
         </div>
       )}

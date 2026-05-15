@@ -1,5 +1,23 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::path::PathBuf;
+
+/// Drop hotkey bindings that fail to parse (e.g. legacy `hot_corner`
+/// triggers from v0.5.0/0.5.1) instead of aborting the whole settings
+/// load and resetting the user's other preferences.
+fn deserialize_lenient_bindings<'de, D>(deserializer: D) -> Result<Vec<HotkeyBinding>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw: Vec<toml::Value> = Vec::deserialize(deserializer)?;
+    let mut out = Vec::with_capacity(raw.len());
+    for v in raw {
+        match v.try_into::<HotkeyBinding>() {
+            Ok(b) => out.push(b),
+            Err(e) => tracing::warn!(error = %e, "dropping unparseable hotkey binding"),
+        }
+    }
+    Ok(out)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -61,18 +79,17 @@ pub enum HotkeyTrigger {
     /// Force-click on a Force Touch trackpad (macOS only). Fires when
     /// NSEvent stage transitions from 1 (normal click) to 2 (force).
     ForceTouch,
-    /// Cursor enters a screen corner (within `radius_px`). Cross-platform.
-    HotCorner { corner: Corner, radius_px: u32 },
+    /// N-finger tap on the trackpad (macOS only, via private
+    /// MultitouchSupport framework). Fires when `fingers` simultaneous
+    /// contacts are released within `max_duration_ms`.
+    TrackpadTap {
+        fingers: u8,
+        #[serde(default = "default_tap_max_ms")]
+        max_duration_ms: u32,
+    },
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
-pub enum Corner {
-    TopLeft,
-    TopRight,
-    BottomLeft,
-    BottomRight,
-}
+fn default_tap_max_ms() -> u32 { 200 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RadialTheme {
@@ -121,7 +138,7 @@ pub struct Settings {
     pub indicator_enabled: bool,
     #[serde(default)]
     pub menu_items: Vec<MenuItem>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_lenient_bindings")]
     pub hotkey_bindings: Vec<HotkeyBinding>,
     /// When true, the radial menu auto-closes the moment the cursor leaves
     /// the menu window. Default false (close requires explicit click /
