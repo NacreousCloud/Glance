@@ -35,7 +35,10 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
+      # Skip rust-cache on macOS — it can restore a stale ~/.cargo/bin
+      # over the freshly-installed proxies, leaving `cargo` un-locatable.
       - uses: Swatinem/rust-cache@v2
+        if: runner.os == 'Windows'
         with: { workspaces: src-tauri }
 
       - run: pnpm install --frozen-lockfile

@@ -38,6 +38,7 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
+        if: runner.os == 'Windows'
         with: { workspaces: src-tauri }
 
       - run: pnpm install --frozen-lockfile
