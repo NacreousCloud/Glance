@@ -20,6 +20,26 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
+      # macos-14 runners ship with a `rustup-init` shim that pre-empts the
+      # rustup-managed cargo; the proxies in ~/.cargo/bin then end up
+      # delegating to the bootstrap installer which rejects subcommands
+      # like `cargo metadata`. Nuke any leftover proxies before installing
+      # a clean toolchain so the new shims land at the front of PATH.
+      - name: Reset Rust state (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo" \
+                "$HOME/.cargo/bin/cargo-clippy" \
+                "$HOME/.cargo/bin/cargo-fmt" \
+                "$HOME/.cargo/bin/rustc" \
+                "$HOME/.cargo/bin/rustdoc" \
+                "$HOME/.cargo/bin/rustfmt" \
+                "$HOME/.cargo/bin/rust-gdb" \
+                "$HOME/.cargo/bin/rust-lldb" \
+                "$HOME/.cargo/bin/rustup" \
+                "$HOME/.cargo/bin/rustup-init" || true
+          sudo rm -f /usr/local/bin/rustup-init /opt/homebrew/bin/rustup-init || true
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable

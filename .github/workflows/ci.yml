@@ -18,14 +18,25 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
+      - name: Reset Rust state (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          rm -f "$HOME/.cargo/bin/cargo" \
+                "$HOME/.cargo/bin/cargo-clippy" \
+                "$HOME/.cargo/bin/cargo-fmt" \
+                "$HOME/.cargo/bin/rustc" \
+                "$HOME/.cargo/bin/rustdoc" \
+                "$HOME/.cargo/bin/rustfmt" \
+                "$HOME/.cargo/bin/rust-gdb" \
+                "$HOME/.cargo/bin/rust-lldb" \
+                "$HOME/.cargo/bin/rustup" \
+                "$HOME/.cargo/bin/rustup-init" || true
+          sudo rm -f /usr/local/bin/rustup-init /opt/homebrew/bin/rustup-init || true
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           cache-workspaces: src-tauri
-      # The macos-14 image ships with a `rustup-init` shim in /usr/local/bin
-      # that pre-empts the rustup-managed cargo. Prepend ~/.cargo/bin so
-      # subsequent `cargo` / `rustup` invocations resolve to the toolchain
-      # the action just installed.
       - name: Prepend cargo bin to PATH
         shell: bash
         run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
