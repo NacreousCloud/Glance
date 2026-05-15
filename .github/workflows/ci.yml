@@ -42,8 +42,17 @@ jobs:
       - name: Frontend tests
         run: pnpm test:run
       - name: Rust check
-        run: cargo check --manifest-path src-tauri/Cargo.toml
+        shell: bash
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          cargo check --manifest-path src-tauri/Cargo.toml
       - name: Rust unit tests
-        run: cargo test --manifest-path src-tauri/Cargo.toml --features mock-os
+        shell: bash
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          cargo test --manifest-path src-tauri/Cargo.toml --features mock-os
       - name: Tauri build (debug)
-        run: pnpm tauri build --debug
+        shell: bash
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          pnpm tauri build --debug

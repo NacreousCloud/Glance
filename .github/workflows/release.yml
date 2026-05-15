@@ -21,11 +21,6 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
 
-      # ── Rust toolchain ────────────────────────────────────────────────
-      # macOS-14 runners ship with a `rustup-init` shim that hijacks
-      # `cargo` and breaks subcommands like `cargo metadata`. Wipe every
-      # stale proxy and reinstall rustup from scratch. This is the only
-      # configuration that's been stable across runner image refreshes.
       - name: Install Rust toolchain (macOS, clean)
         if: runner.os == 'macOS'
         shell: bash
@@ -35,7 +30,6 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
             | sh -s -- -y --default-toolchain stable --profile minimal --no-modify-path
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          # Sanity-check what the next steps will resolve.
           "$HOME/.cargo/bin/cargo" --version
           "$HOME/.cargo/bin/rustc" --version
       - name: Install Rust toolchain (Windows)
@@ -47,12 +41,14 @@ jobs:
         with: { workspaces: src-tauri }
 
       - run: pnpm install --frozen-lockfile
-      - name: Build + upload release artifacts
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri bundle
+        shell: bash
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          pnpm tauri build
+      - name: Upload artifacts
+        uses: softprops/action-gh-release@v2
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "${{ github.ref_name }}"
-          releaseDraft: false
-          prerelease: false
+          files: |
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/msi/*.msi
