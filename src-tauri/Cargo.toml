@@ -1,6 +1,6 @@
 [package]
 name = "glance"
-version = "0.6.3"
+version = "0.6.4"
 description = "Notification indicator + radial quick menu at the cursor"
 authors = ["you"]
 edition = "2021"

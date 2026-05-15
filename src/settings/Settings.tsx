@@ -7,6 +7,7 @@ import MenuEditor from './menu/MenuEditor';
 import HotkeyEditor from './hotkey/HotkeyEditor';
 import ErrorLog from './ErrorLog';
 import RadialThemeEditor from './RadialThemeEditor';
+import About from './About';
 import { getSettings, setSettings, DEFAULT_RADIAL_THEME, type Settings as S } from './api';
 
 export default function Settings() {
@@ -33,7 +34,7 @@ export default function Settings() {
     <div className="p-6 max-w-md mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Glance</h1>
-        <span className="text-xs text-gray-400">v0.6.3</span>
+        <span className="text-xs text-gray-400">v0.6.4</span>
       </div>
       <PermissionPanel />
       <hr className="border-gray-100" />
@@ -89,6 +90,8 @@ export default function Settings() {
           }
         />
       </label>
+      <hr className="border-gray-100" />
+      <About />
     </div>
   );
 }
