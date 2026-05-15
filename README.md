@@ -39,6 +39,42 @@ Windows 사용자가 MSI 설치 후 동작 보고 환영. 이슈는
 
 ---
 
+## 📦 처음 설치 후 실행 (배포 빌드 사용자)
+
+[Releases 페이지](https://github.com/NacreousCloud/Glance/releases)에서 DMG/MSI 받아 설치할 때.
+
+> ⚠️ **현재 코드 서명/공증 안 됨**. OS 보안 경고를 우회해야 함. 위험 인지하고 진행할 것.
+
+### macOS (DMG)
+
+1. `Glance_*.dmg` 다운로드 → 더블클릭으로 마운트
+2. `Glance.app` 을 `/Applications` 폴더로 드래그
+3. **첫 실행 차단됨** (Gatekeeper "확인되지 않은 개발자"):
+   - macOS 14 이하: Finder에서 `Glance.app` **우클릭 → 열기** → "열기" 다시 클릭
+   - macOS 15+: 시스템 설정 → **개인정보 보호 및 보안** → 하단 "Glance was blocked..." 옆 **"그래도 열기"** 버튼
+4. 트레이 메뉴바에 Glance 아이콘 표시됨
+5. 트레이 → `Settings…` → **Permissions** 패널 → **Open System Settings** 클릭
+6. **개인정보 보호 및 보안 → 손쉬운 사용**에서 Glance 토글 ON
+7. 트레이 → `Quit Glance` → 다시 실행 (권한은 바이너리 해시별로 캐시됨, 재시작 필수)
+8. Settings → Hotkey bindings → 단축키 추가 → 라디얼 메뉴 호출 가능
+
+**터미널 우회 (선택)**: `xattr -d com.apple.quarantine /Applications/Glance.app`
+
+### Windows (MSI)
+
+1. `Glance_*.msi` 다운로드 → 더블클릭
+2. **SmartScreen 경고**: "Windows에서 PC 보호" 화면 표시됨
+   - "추가 정보" 클릭 → "실행" 버튼 표시됨 → 클릭
+3. 인스톨러 진행 → `Program Files\Glance\` 에 설치
+4. 시작 메뉴 또는 데스크톱에서 Glance 실행
+5. 첫 실행 시 **알림 리스너 동의 프롬프트** → "허용" 클릭
+   - 허용 안 하면 다른 앱 알림 감지 안 됨
+6. 트레이 → `Settings…` → 메뉴 항목 / 단축키 추가 → 사용 시작
+
+⚠️ Windows 빌드는 GitHub Actions runner 에서 컴파일 검증만 함. 실제 Windows 머신에서의 동작은 미검증. 이슈 발견 시 [Issues](https://github.com/NacreousCloud/Glance/issues) 로 알려주면 좋음.
+
+---
+
 ## 사전 준비
 
 ### 공통

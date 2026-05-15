@@ -26,10 +26,14 @@ describe('StylePicker', () => {
 });
 
 describe('PermissionPanel', () => {
-  it('shows Required + Grant button when accessibility not granted on macOS', async () => {
+  it('shows the required banner + system-settings deep link when accessibility not granted on macOS', async () => {
     const { default: PermissionPanel } = await import('./PermissionPanel');
     render(<PermissionPanel />);
-    expect(await screen.findByText('Required')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /grant/i })).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Accessibility permission required/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /open system settings/i })
+    ).toBeInTheDocument();
   });
 });

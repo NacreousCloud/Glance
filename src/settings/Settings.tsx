@@ -34,7 +34,7 @@ export default function Settings() {
     <div className="p-6 max-w-md mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Glance</h1>
-        <span className="text-xs text-gray-400">v0.6.4</span>
+        <span className="text-xs text-gray-400">v0.6.5</span>
       </div>
       <PermissionPanel />
       <hr className="border-gray-100" />

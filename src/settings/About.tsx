@@ -5,7 +5,7 @@ const EMAIL = 'bebekh1216@gmail.com';
 const REPO = 'https://github.com/NacreousCloud/Glance';
 const ISSUES = 'https://github.com/NacreousCloud/Glance/issues';
 const RELEASES = 'https://github.com/NacreousCloud/Glance/releases';
-const VERSION = '0.6.4';
+const VERSION = '0.6.5';
 
 function buildReportMailto(): string {
   const subject = encodeURIComponent(`[Glance ${VERSION}] Bug report / Feedback`);
