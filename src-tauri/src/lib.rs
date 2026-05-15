@@ -292,6 +292,27 @@ pub fn run() {
                 std::mem::forget(monitor);
             }
 
+            // Force Touch (trackpad) — macOS only. Pressure event global
+            // monitor, same lifetime semantics as the mouse monitor.
+            #[cfg(target_os = "macos")]
+            {
+                let monitor = hotkey::gestures::GestureMonitor::start(
+                    shared_bindings.clone(),
+                    hotkey_tx.clone(),
+                );
+                std::mem::forget(monitor);
+            }
+
+            // Hot-corner trigger — cross-platform cursor poll thread.
+            {
+                let monitor = hotkey::hot_corner::HotCornerMonitor::start(
+                    app.handle().clone(),
+                    shared_bindings.clone(),
+                    hotkey_tx.clone(),
+                );
+                std::mem::forget(monitor);
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

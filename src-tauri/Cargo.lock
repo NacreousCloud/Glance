@@ -1390,7 +1390,7 @@ dependencies = [
 
 [[package]]
 name = "glance"
-version = "0.4.6"
+version = "0.5.0"
 dependencies = [
  "accessibility-sys",
  "anyhow",

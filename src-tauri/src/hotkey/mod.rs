@@ -1,6 +1,10 @@
 pub mod keyboard;
+pub mod hot_corner;
 #[cfg(target_os = "macos")]
 pub mod mouse;
+#[cfg(target_os = "macos")]
+#[path = "gestures_macos.rs"]
+pub mod gestures;
 
 #[cfg(target_os = "windows")]
 #[path = "mouse_windows.rs"]

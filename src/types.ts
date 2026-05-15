@@ -17,9 +17,13 @@ export type MenuItem = {
   tags: string[];
 };
 
+export type Corner = 'top_left' | 'top_right' | 'bottom_left' | 'bottom_right';
+
 export type HotkeyTrigger =
   | { kind: 'keyboard'; accelerator: string }
-  | { kind: 'mouse'; button: number; modifiers: number };
+  | { kind: 'mouse'; button: number; modifiers: number }
+  | { kind: 'force_touch' }
+  | { kind: 'hot_corner'; corner: Corner; radius_px: number };
 
 export type HotkeyBinding = {
   id: string;

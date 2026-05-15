@@ -58,6 +58,20 @@ fn default_mode() -> String { "all".into() }
 pub enum HotkeyTrigger {
     Keyboard { accelerator: String },
     Mouse { button: u8, modifiers: u8 },
+    /// Force-click on a Force Touch trackpad (macOS only). Fires when
+    /// NSEvent stage transitions from 1 (normal click) to 2 (force).
+    ForceTouch,
+    /// Cursor enters a screen corner (within `radius_px`). Cross-platform.
+    HotCorner { corner: Corner, radius_px: u32 },
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Corner {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

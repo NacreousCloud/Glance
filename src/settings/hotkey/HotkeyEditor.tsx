@@ -1,11 +1,35 @@
 import { useEffect, useState } from 'react';
-import type { HotkeyBinding } from '../../types';
+import type { HotkeyBinding, HotkeyTrigger } from '../../types';
 import {
   listHotkeyBindings,
   upsertHotkeyBinding,
   deleteHotkeyBinding,
 } from '../api';
 import HotkeyCapture from './HotkeyCapture';
+
+const MOUSE_BUTTON_LABEL: Record<number, string> = {
+  1: 'Left', 2: 'Right', 3: 'Middle', 4: 'Back', 5: 'Forward',
+};
+
+function formatTrigger(t: HotkeyTrigger): string {
+  switch (t.kind) {
+    case 'keyboard':
+      return t.accelerator || '(none)';
+    case 'mouse': {
+      const parts: string[] = [];
+      if (t.modifiers & 1) parts.push('Cmd');
+      if (t.modifiers & 2) parts.push('Ctrl');
+      if (t.modifiers & 4) parts.push('Shift');
+      if (t.modifiers & 8) parts.push('Alt');
+      parts.push(MOUSE_BUTTON_LABEL[t.button] ?? `Mouse${t.button}`);
+      return parts.join('+');
+    }
+    case 'force_touch':
+      return 'Force Touch';
+    case 'hot_corner':
+      return `Hot Corner: ${t.corner} (${t.radius_px}px)`;
+  }
+}
 
 const newBinding = (): HotkeyBinding => ({
   id: crypto.randomUUID(),
@@ -87,9 +111,7 @@ export default function HotkeyEditor() {
             className="flex items-center justify-between border rounded p-2"
           >
             <code className="text-sm">
-              {b.trigger.kind === 'keyboard'
-                ? b.trigger.accelerator
-                : `Mouse ${b.trigger.button} + mods=${b.trigger.modifiers}`}
+              {formatTrigger(b.trigger)}
               {' → '}
               {b.menu_mode}
             </code>
