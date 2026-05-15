@@ -20,33 +20,32 @@ jobs:
         with: { version: 9 }
       - uses: actions/setup-node@v4
         with: { node-version: 20, cache: pnpm }
-      # macos-14 runners ship with a `rustup-init` shim that pre-empts the
-      # rustup-managed cargo; the proxies in ~/.cargo/bin then end up
-      # delegating to the bootstrap installer which rejects subcommands
-      # like `cargo metadata`. Nuke any leftover proxies before installing
-      # a clean toolchain so the new shims land at the front of PATH.
-      - name: Reset Rust state (macOS)
+
+      # ── Rust toolchain ────────────────────────────────────────────────
+      # macOS-14 runners ship with a `rustup-init` shim that hijacks
+      # `cargo` and breaks subcommands like `cargo metadata`. Wipe every
+      # stale proxy and reinstall rustup from scratch. This is the only
+      # configuration that's been stable across runner image refreshes.
+      - name: Install Rust toolchain (macOS, clean)
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          rm -f "$HOME/.cargo/bin/cargo" \
-                "$HOME/.cargo/bin/cargo-clippy" \
-                "$HOME/.cargo/bin/cargo-fmt" \
-                "$HOME/.cargo/bin/rustc" \
-                "$HOME/.cargo/bin/rustdoc" \
-                "$HOME/.cargo/bin/rustfmt" \
-                "$HOME/.cargo/bin/rust-gdb" \
-                "$HOME/.cargo/bin/rust-lldb" \
-                "$HOME/.cargo/bin/rustup" \
-                "$HOME/.cargo/bin/rustup-init" || true
           sudo rm -f /usr/local/bin/rustup-init /opt/homebrew/bin/rustup-init || true
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+          rm -rf "$HOME/.cargo/bin" || true
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --default-toolchain stable --profile minimal --no-modify-path
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          # Sanity-check what the next steps will resolve.
+          "$HOME/.cargo/bin/cargo" --version
+          "$HOME/.cargo/bin/rustc" --version
+      - name: Install Rust toolchain (Windows)
+        if: runner.os == 'Windows'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache-workspaces: src-tauri
-      - name: Prepend cargo bin to PATH
-        shell: bash
-        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-tauri }
+
       - run: pnpm install --frozen-lockfile
       - name: Build + upload release artifacts
         uses: tauri-apps/tauri-action@v0
