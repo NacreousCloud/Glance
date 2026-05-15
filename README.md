@@ -9,16 +9,33 @@
 
 ## 현재 상태
 
-**v0.4.0** — Phase 1 (알림 인디케이터) + Phase 2 (라디얼 퀵메뉴) 출시. 프로젝트 이름 `mouse-noti` → `Glance` 변경.
+**v0.4.6** — 첫 정식 cross-platform release. DMG (macOS aarch64) + MSI (Windows x64) 자동 빌드.
 
 - 알림 인디케이터 3종 (Ring Pulse / Icon Badge / Persistent Badge)
-- 라디얼 퀵메뉴 (커서 중심 부채꼴, 키보드 단축키 호출)
+- 라디얼 퀵메뉴 (커서 중심 부채꼴, 키보드 + 마우스 단축키 호출)
 - 메뉴 액션: 앱 실행 / URL / 셸 명령
-- 셸 명령 프리셋 16종 + 고급 수동 입력 모드
+- 셸 명령 프리셋 (macOS 16 / Windows 16, 플랫폼 자동 필터)
 - 라디얼 외관 커스터마이즈 (색상, 투명도)
 - 실행 실패 시 빨간 배지 알림 + Recent errors 패널
 
 지원 OS: macOS 13+, Windows 10 (1809+).
+
+### ⚠️ Windows 빌드 검증 상태
+
+Windows 코드 경로는 macOS 호스트에서 **컴파일 검증만** 거침 (GitHub Actions
+`windows-latest` runner). 실제 Windows 머신에서 다음 동작은 **미검증**:
+
+- 알림 감지 (UserNotificationListener)
+- 라디얼 메뉴 윈도우 transparent 동작
+- **마우스 단축키** (`SetWindowsHookExW(WH_MOUSE_LL)` 기반 — 새 코드, 실기 테스트 필요)
+- 셸 프리셋 실행 (PowerShell 명령 16종)
+- 트레이 아이콘 렌더링
+- Multi-monitor DPI 스케일링
+- MSI 인스톨러 동작 (Code Signing 미적용)
+
+Windows 사용자가 MSI 설치 후 동작 보고 환영. 이슈는
+[https://github.com/NacreousCloud/Glance/issues](https://github.com/NacreousCloud/Glance/issues)
+로 부탁드림.
 
 ---
 
