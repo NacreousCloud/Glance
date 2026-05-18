@@ -20,82 +20,83 @@ export default function PermissionPanel() {
 
   const isMac = status.platform === 'macos';
   const granted = isMac ? status.accessibility_ok : status.notification_listener_ok;
-  const label = isMac ? 'Accessibility' : 'Notification listener';
+  const label = isMac ? 'Accessibility' : 'Notifications';
   const settingsUri = isMac ? MAC_ACCESSIBILITY_URI : WIN_NOTIFICATIONS_URI;
 
   const unlocks = isMac
     ? [
-        'Notification detection (CGWindowList polling)',
-        'Mouse-button hotkeys',
-        'Force Touch + trackpad-tap hotkeys',
+        'Notification detection',
+        'Mouse & Trackpad gestures',
       ]
-    : ['System notification capture (UserNotificationListener)'];
+    : ['System notification capture'];
 
-  const stepHints = isMac
-    ? [
-        'Click "Open System Settings" below.',
-        'In "Privacy & Security → Accessibility", toggle Glance ON.',
-        'Quit Glance from the tray icon, then relaunch it (macOS caches the trust state per binary hash).',
-      ]
-    : [
-        'Click "Open System Settings" below.',
-        'In "System → Notifications", make sure Glance is allowed.',
-        'If the listener is still blocked, sign out and back in once (Windows caches the consent).',
-      ];
-
-  return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold">Permissions</h2>
-      {granted ? (
-        <div className="flex items-center justify-between rounded border p-3">
-          <div>
-            <div className="font-medium">{label}</div>
-            <div className="text-green-600 text-sm">Granted</div>
+  if (granted) {
+    return (
+      <div className="ios-card">
+        <div className="ios-item">
+          <div className="flex flex-col">
+            <span className="ios-title">{label}</span>
+            <span className="ios-subtitle text-ios-system-green">Permission Granted</span>
+          </div>
+          <div className="w-6 h-6 rounded-full bg-ios-system-green flex items-center justify-center text-white">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
         </div>
-      ) : (
-        <div className="rounded border border-red-300 bg-red-50 p-3 space-y-2">
-          <div className="font-medium text-red-700">
-            ⚠️ {label} permission required
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <h2 className="px-4 text-[13px] uppercase tracking-wider text-ios-system-red">
+        Action Required
+      </h2>
+      <div className="ios-card border-ios-system-red/30 bg-ios-system-red/[0.03]">
+        <div className="p-4 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-full bg-ios-system-red/10 flex items-center justify-center text-ios-system-red shrink-0">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="ios-title text-ios-system-red">{label} Access Required</h3>
+              <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-1 leading-snug">
+                Glance needs this to detect notifications and mouse gestures.
+                Without it, features like {unlocks.join(', ')} will be disabled.
+              </p>
+            </div>
           </div>
-          <div className="text-xs text-gray-700">
-            Without it the following stops working:
-            <ul className="list-disc list-inside mt-1">
-              {unlocks.map((u) => (
-                <li key={u}>{u}</li>
-              ))}
-            </ul>
-          </div>
-          <ol className="text-xs text-gray-700 list-decimal list-inside space-y-0.5">
-            {stepHints.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ol>
-          <div className="flex gap-2 pt-1">
+
+          <div className="grid grid-cols-1 gap-2">
             <button
               type="button"
-              className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
-              onClick={() => requestPermission().then(refresh).catch(() => {})}
-            >
-              Trigger system prompt
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1 bg-gray-200 text-gray-800 rounded text-sm"
+              className="w-full py-2.5 bg-ios-system-blue text-white rounded-ios font-semibold text-[15px] active:opacity-80 transition-opacity"
               onClick={() => openUrl(settingsUri).catch(() => {})}
             >
               Open System Settings
             </button>
-            <button
-              type="button"
-              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
-              onClick={refresh}
-            >
-              Re-check
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="flex-1 py-2 bg-gray-200 dark:bg-white/10 text-ios-label-primary dark:text-white rounded-ios text-[14px] font-medium"
+                onClick={() => requestPermission().then(refresh).catch(() => {})}
+              >
+                Prompt
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-2 bg-gray-200 dark:bg-white/10 text-ios-label-primary dark:text-white rounded-ios text-[14px] font-medium"
+                onClick={refresh}
+              >
+                Re-check
+              </button>
+            </div>
           </div>
         </div>
-      )}
-    </section>
+      </div>
+    </div>
   );
 }

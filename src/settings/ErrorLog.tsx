@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getRecentErrors, clearErrors, type ErrorEntry } from './api';
 
-function formatTime(ms: number) {
-  const d = new Date(ms);
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
-}
-
 export default function ErrorLog() {
   const [errors, setErrors] = useState<ErrorEntry[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -20,69 +12,61 @@ export default function ErrorLog() {
     return () => window.clearInterval(id);
   }, []);
 
-  if (errors.length === 0) {
-    return (
-      <section className="space-y-2">
-        <h2 className="text-sm font-semibold">Recent errors</h2>
-        <p className="text-xs text-gray-400">No errors recorded.</p>
-      </section>
-    );
-  }
-
   return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">
-          Recent errors{' '}
-          <span className="text-xs text-gray-400 font-normal">
-            ({errors.length})
-          </span>
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between px-4">
+        <h2 className="text-[13px] uppercase tracking-wider text-ios-label-secondary dark:text-ios-label-secondaryDark">
+          System Errors {errors.length > 0 && `(${errors.length})`}
         </h2>
-        <button
-          type="button"
-          className="text-xs text-gray-500 hover:text-red-600"
-          onClick={() => {
-            clearErrors().then(() => setErrors([]));
-          }}
-        >
-          Clear
-        </button>
+        {errors.length > 0 && (
+          <button
+            type="button"
+            className="text-[13px] font-medium text-ios-system-red active:opacity-60"
+            onClick={() => {
+              clearErrors().then(() => setErrors([]));
+            }}
+          >
+            Clear All
+          </button>
+        )}
       </div>
-      <ul className="space-y-1 max-h-64 overflow-y-auto">
-        {errors.map((e) => {
-          const isOpen = expanded === e.id;
-          const firstLine = e.message.split('\n')[0];
-          return (
-            <li
-              key={e.id}
-              className="border border-red-200 bg-red-50 rounded p-2 text-xs"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <span className="font-mono">{formatTime(e.timestamp_ms)}</span>
-                    <span className="font-medium text-gray-700 truncate">
-                      {e.item_label}
-                    </span>
-                  </div>
-                  <div className="font-mono text-red-700 break-all">
-                    {isOpen ? e.message : firstLine}
-                  </div>
+
+      <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
+        {errors.length === 0 ? (
+          <div className="p-8 text-[15px] text-ios-label-secondary dark:text-ios-label-secondaryDark text-center italic">
+            No errors recorded.
+          </div>
+        ) : (
+          errors.map((e) => {
+            const isOpen = expanded === e.id;
+            const firstLine = e.message.split('\n')[0];
+            return (
+              <div key={e.id} className="p-4 space-y-1 bg-ios-system-red/[0.02] active:bg-ios-system-red/[0.05] transition-colors">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-[11px] font-bold text-ios-system-red uppercase tracking-tight">
+                    {e.item_label || 'System'}
+                  </span>
+                  <span className="text-[11px] text-ios-label-secondary dark:text-ios-label-secondaryDark">
+                    {new Date(e.timestamp_ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </span>
                 </div>
-                {e.message.includes('\n') || e.message.length > 80 ? (
+                <div className="text-[13px] font-mono text-ios-system-red break-all leading-tight">
+                  {isOpen ? e.message : firstLine}
+                </div>
+                {(e.message.includes('\n') || e.message.length > 60) && (
                   <button
                     type="button"
-                    className="text-gray-500 hover:text-blue-600 shrink-0"
+                    className="text-[11px] font-semibold text-ios-system-blue uppercase mt-1"
                     onClick={() => setExpanded(isOpen ? null : e.id)}
                   >
-                    {isOpen ? 'Collapse' : 'More'}
+                    {isOpen ? 'Show Less' : 'Read More'}
                   </button>
-                ) : null}
+                )}
               </div>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+            );
+          })
+        )}
+      </div>
+    </div>
   );
 }

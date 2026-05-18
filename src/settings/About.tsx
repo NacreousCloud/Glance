@@ -37,52 +37,55 @@ export default function About() {
   };
 
   return (
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold">About</h2>
-      <div className="space-y-2 rounded border p-3 text-xs">
-        <div className="flex items-center justify-between">
-          <span className="text-gray-500">Developer</span>
-          <span className="font-medium text-gray-700">{DEVELOPER}</span>
+    <div className="space-y-6">
+      <div className="flex flex-col items-center py-6">
+        <div className="w-20 h-20 rounded-[22%] bg-gradient-to-br from-ios-system-blue to-blue-600 shadow-xl flex items-center justify-center text-white text-4xl font-bold mb-3 overflow-hidden">
+          G
         </div>
-        <div className="flex items-center justify-between">
-          <span className="text-gray-500">Version</span>
-          <span className="font-mono text-gray-700">v{VERSION}</span>
-        </div>
-        <hr className="border-gray-100" />
-        <div className="space-y-1">
-          <button
-            type="button"
-            onClick={() => open(buildReportMailto())}
-            className="w-full text-left px-2 py-1 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700"
-          >
-            ✉️ Report a bug or send feedback
-            <span className="block text-[10px] text-blue-500 font-mono">
-              {EMAIL}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => open(ISSUES)}
-            className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
-          >
-            🐛 GitHub Issues
-          </button>
-          <button
-            type="button"
-            onClick={() => open(REPO)}
-            className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
-          >
-            🧭 Source code
-          </button>
-          <button
-            type="button"
-            onClick={() => open(RELEASES)}
-            className="w-full text-left px-2 py-1 rounded hover:bg-gray-50 text-gray-700"
-          >
-            ⬇️ Releases (check for updates)
-          </button>
-        </div>
+        <h2 className="text-xl font-bold tracking-tight">Glance</h2>
+        <p className="text-[13px] text-ios-label-secondary dark:text-ios-label-secondaryDark mt-1">
+          Version {VERSION} ({DEVELOPER})
+        </p>
       </div>
-    </section>
+
+      <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
+        <button
+          type="button"
+          onClick={() => open(buildReportMailto())}
+          className="ios-item ios-item-active w-full text-left"
+        >
+          <span className="ios-title text-ios-system-blue">Send Feedback</span>
+          <span className="text-ios-system-blue opacity-50">→</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => open(ISSUES)}
+          className="ios-item ios-item-active w-full text-left"
+        >
+          <span className="ios-title">GitHub Issues</span>
+          <span className="text-ios-label-secondary">→</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => open(REPO)}
+          className="ios-item ios-item-active w-full text-left"
+        >
+          <span className="ios-title">Source Code</span>
+          <span className="text-ios-label-secondary">→</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => open(RELEASES)}
+          className="ios-item ios-item-active w-full text-left"
+        >
+          <span className="ios-title">Release Notes</span>
+          <span className="text-ios-label-secondary">→</span>
+        </button>
+      </div>
+
+      <p className="px-4 text-[11px] text-center text-ios-label-secondary dark:text-ios-label-secondaryDark uppercase tracking-widest">
+        © 2026 {DEVELOPER}
+      </p>
+    </div>
   );
 }

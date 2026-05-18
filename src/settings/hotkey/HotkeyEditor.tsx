@@ -58,70 +58,91 @@ export default function HotkeyEditor() {
   };
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-sm font-semibold">Hotkey bindings</h2>
+    <div className="space-y-4">
       {editing ? (
-        <div className="border p-3 rounded space-y-2">
-          <HotkeyCapture
-            value={editing.trigger}
-            onChange={(t) => setEditing({ ...editing, trigger: t })}
-          />
-          <div>
-            <label className="text-sm font-medium">Menu mode</label>
-            <select
-              className="border rounded px-2 py-1 ml-2"
-              value={editing.menu_mode}
-              onChange={(e) => setEditing({ ...editing, menu_mode: e.target.value })}
-            >
-              <option value="all">All items</option>
-              <option value="launcher">Launcher only</option>
-              <option value="notification">Notification actions only</option>
-            </select>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="px-3 py-1 bg-blue-600 text-white rounded"
-              onClick={() => onSave(editing)}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1 bg-gray-200 rounded"
-              onClick={() => setEditing(null)}
-            >
-              Cancel
-            </button>
+        <div className="ios-card bg-ios-system-blue/[0.03] border-ios-system-blue/20">
+          <div className="p-4 space-y-4">
+            <h3 className="ios-title text-ios-system-blue">Edit Binding</h3>
+            <HotkeyCapture
+              value={editing.trigger}
+              onChange={(t) => setEditing({ ...editing, trigger: t })}
+            />
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-ios-label-secondary dark:text-ios-label-secondaryDark uppercase tracking-wider px-1">
+                Menu Mode
+              </label>
+              <select
+                className="w-full bg-white dark:bg-white/10 border-none rounded-ios px-3 py-2 text-[15px] focus:ring-2 focus:ring-ios-system-blue outline-none"
+                value={editing.menu_mode}
+                onChange={(e) => setEditing({ ...editing, menu_mode: e.target.value as any })}
+              >
+                <option value="all">All items</option>
+                <option value="launcher">Launcher only</option>
+                <option value="notification">Notification actions only</option>
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="flex-1 py-2.5 bg-ios-system-blue text-white rounded-ios font-semibold active:opacity-80 transition-opacity"
+                onClick={() => onSave(editing)}
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-2.5 bg-gray-200 dark:bg-white/10 text-ios-label-primary dark:text-white rounded-ios font-medium active:opacity-80 transition-opacity"
+                onClick={() => setEditing(null)}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       ) : (
         <button
           type="button"
-          className="px-3 py-1 bg-gray-200 rounded text-sm"
+          className="ios-item ios-item-active w-full text-left bg-white/50 dark:bg-white/5 rounded-ios border border-dashed border-ios-separator-light dark:border-ios-separator-dark"
           onClick={() => setEditing(newBinding())}
         >
-          + Add binding
+          <span className="ios-title text-ios-system-blue">+ Add new hotkey</span>
         </button>
       )}
-      <ul className="space-y-1">
-        {bindings.map((b) => (
-          <li
-            key={b.id}
-            className="flex items-center justify-between border rounded p-2"
-          >
-            <code className="text-sm">
-              {formatTrigger(b.trigger)}
-              {' → '}
-              {b.menu_mode}
-            </code>
-            <div className="flex gap-1">
-              <button type="button" className="px-2 text-sm" onClick={() => setEditing(b)}>Edit</button>
-              <button type="button" className="px-2 text-sm text-red-600" onClick={() => onDelete(b.id)}>Delete</button>
+
+      <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
+        {bindings.length === 0 && !editing ? (
+          <div className="p-8 text-[15px] text-ios-label-secondary dark:text-ios-label-secondaryDark text-center italic">
+            No hotkeys configured.
+          </div>
+        ) : (
+          bindings.map((b) => (
+            <div key={b.id} className="ios-item group">
+              <div className="flex flex-col">
+                <span className="ios-title font-mono bg-ios-system-blue/10 dark:bg-ios-system-blue/20 text-ios-system-blue px-2 py-0.5 rounded-md inline-block w-fit">
+                  {formatTrigger(b.trigger)}
+                </span>
+                <span className="ios-subtitle mt-0.5">Mode: {b.menu_mode}</span>
+              </div>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  type="button" 
+                  className="p-2 text-ios-system-blue font-medium text-[14px] active:opacity-60" 
+                  onClick={() => setEditing(b)}
+                >
+                  Edit
+                </button>
+                <button 
+                  type="button" 
+                  className="p-2 text-ios-system-red font-medium text-[14px] active:opacity-60" 
+                  onClick={() => onDelete(b.id)}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+          ))
+        )}
+      </div>
+    </div>
   );
 }

@@ -53,48 +53,70 @@ export default function MenuEditor() {
   };
 
   return (
-    <section className="space-y-3">
-      <h2 className="text-sm font-semibold">Menu items</h2>
+    <div className="space-y-4">
       {editing ? (
-        <MenuItemForm
-          initial={editing}
-          onSave={onSave}
-          onCancel={() => setEditing(null)}
-        />
+        <div className="ios-card bg-ios-system-blue/[0.03] border-ios-system-blue/20">
+          <div className="p-4">
+            <MenuItemForm
+              initial={editing}
+              onSave={onSave}
+              onCancel={() => setEditing(null)}
+            />
+          </div>
+        </div>
       ) : (
         <button
           type="button"
-          className="px-3 py-1 bg-gray-200 rounded text-sm"
+          className="ios-item ios-item-active w-full text-left bg-white/50 dark:bg-white/5 rounded-ios border border-dashed border-ios-separator-light dark:border-ios-separator-dark"
           onClick={() => setEditing(newItem())}
         >
-          + Add item
+          <span className="ios-title text-ios-system-blue">+ Add menu item</span>
         </button>
       )}
-      <ul className="space-y-1">
-        {items.map((it, i) => (
-          <li
-            key={it.id}
-            className="flex items-center justify-between border rounded p-2"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">
-                {it.icon.kind === 'emoji' ? (
-                  it.icon.value
-                ) : (
-                  <img src={`data:image/png;base64,${it.icon.base64}`} width={24} height={24} alt="" />
-                )}
-              </span>
-              <span>{it.label}</span>
+
+      <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
+        {items.length === 0 && !editing ? (
+          <div className="p-8 text-[15px] text-ios-label-secondary dark:text-ios-label-secondaryDark text-center italic">
+            No items in radial menu.
+          </div>
+        ) : (
+          items.map((it, i) => (
+            <div key={it.id} className="ios-item group transition-colors hover:bg-black/[0.01] dark:hover:bg-white/[0.01]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-ios bg-gray-100 dark:bg-white/10 flex items-center justify-center text-xl shadow-sm">
+                  {it.icon.kind === 'emoji' ? (
+                    it.icon.value
+                  ) : (
+                    <img src={`data:image/png;base64,${it.icon.base64}`} className="w-6 h-6 object-contain" alt="" />
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="ios-title">{it.label}</span>
+                  <span className="ios-subtitle">{it.action.kind.replace('_', ' ')}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex flex-col">
+                  <button type="button" className="p-1.5 text-ios-label-secondary hover:text-ios-system-blue transition-colors disabled:opacity-20" disabled={i === 0} onClick={() => moveUp(i)}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 15l7-7 7 7" /></svg>
+                  </button>
+                  <button type="button" className="p-1.5 text-ios-label-secondary hover:text-ios-system-blue transition-colors disabled:opacity-20" disabled={i === items.length - 1} onClick={() => moveDown(i)}>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                </div>
+                <div className="w-px h-8 bg-ios-separator-light dark:bg-ios-separator-dark mx-1" />
+                <button type="button" className="p-2 text-ios-system-blue font-medium text-[14px] active:opacity-60" onClick={() => setEditing(it)}>
+                  Edit
+                </button>
+                <button type="button" className="p-2 text-ios-system-red font-medium text-[14px] active:opacity-60" onClick={() => onDelete(it.id)}>
+                  Delete
+                </button>
+              </div>
             </div>
-            <div className="flex gap-1">
-              <button type="button" className="px-2 text-sm" onClick={() => moveUp(i)}>↑</button>
-              <button type="button" className="px-2 text-sm" onClick={() => moveDown(i)}>↓</button>
-              <button type="button" className="px-2 text-sm" onClick={() => setEditing(it)}>Edit</button>
-              <button type="button" className="px-2 text-sm text-red-600" onClick={() => onDelete(it.id)}>Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
+          ))
+        )}
+      </div>
+    </div>
   );
 }

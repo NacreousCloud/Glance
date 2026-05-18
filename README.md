@@ -308,7 +308,7 @@ pnpm test:run                                          # 프론트엔드 (Vitest
 cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛 (22 tests)
 ```
 
-매뉴얼 QA 체크리스트: `docs/superpowers/checklists/mvp-manual-qa.md`
+매뉴얼 QA 체크리스트: `docs/gemini/checklists/mvp-manual-qa.md`
 
 ---
 
@@ -370,16 +370,16 @@ glance/
 ├── src/                      # React 프론트엔드
 │   ├── overlay/              # 인디케이터 컴포넌트 (3종)
 │   └── settings/             # Settings GUI
-└── docs/superpowers/         # 스펙 + 플랜 + QA 체크리스트
+└── docs/gemini/         # 스펙 + 플랜 + QA 체크리스트
 ```
 
 ---
 
 ## 문서
 
-- 디자인 스펙: `docs/superpowers/specs/2026-05-13-mouse-noti-design.md`
-- MVP 구현 플랜: `docs/superpowers/plans/2026-05-13-mouse-noti-mvp.md`
-- 매뉴얼 QA 체크리스트: `docs/superpowers/checklists/mvp-manual-qa.md`
+- 디자인 스펙: `docs/gemini/specs/2026-05-13-mouse-noti-design.md`
+- MVP 구현 플랜: `docs/gemini/plans/2026-05-13-mouse-noti-mvp.md`
+- 매뉴얼 QA 체크리스트: `docs/gemini/checklists/mvp-manual-qa.md`
 
 ---
 

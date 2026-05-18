@@ -304,14 +304,14 @@ pub fn run() {
             }
 
             // Trackpad N-finger tap (macOS only, MultitouchSupport
-            // private framework). Dlopen'd on a dedicated thread.
+            // private framework). Dlopen'd on a dedicated thread; the
+            // returned handle is a ZST so there is nothing to keep alive.
             #[cfg(target_os = "macos")]
             {
-                let monitor = hotkey::trackpad::TrackpadMonitor::start(
+                hotkey::trackpad::TrackpadMonitor::start(
                     shared_bindings.clone(),
                     hotkey_tx.clone(),
                 );
-                std::mem::forget(monitor);
             }
 
             Ok(())

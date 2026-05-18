@@ -12,9 +12,17 @@ export default function AutoStartToggle() {
 
   if (on === null) return null;
   return (
-    <label className="flex items-center justify-between border rounded p-3">
-      <span className="font-medium">Launch at login</span>
-      <input type="checkbox" checked={on} onChange={toggle} />
+    <label className="ios-item ios-item-active">
+      <div className="flex flex-col">
+        <span className="ios-title">Launch at login</span>
+        <span className="ios-subtitle">Start Glance automatically</span>
+      </div>
+      <input 
+        type="checkbox" 
+        className="w-11 h-6 appearance-none bg-gray-300 dark:bg-white/10 rounded-full relative transition-colors cursor-pointer checked:bg-ios-system-green before:content-[''] before:absolute before:w-5 before:h-5 before:bg-white before:rounded-full before:top-0.5 before:left-0.5 before:transition-transform checked:before:translate-x-5"
+        checked={on} 
+        onChange={toggle} 
+      />
     </label>
   );
 }

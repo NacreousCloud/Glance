@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply font-sans antialiased text-ios-label-primary dark:text-ios-label-primaryDark;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+@layer components {
+  .ios-glass {
+    @apply bg-ios-bg-light dark:bg-ios-bg-dark backdrop-blur-ios border border-white/20 dark:border-white/10;
+  }
+  
+  .ios-card {
+    @apply ios-glass rounded-ios overflow-hidden;
+  }
+
+  .ios-item {
+    @apply px-4 py-3 flex items-center justify-between transition-colors;
+  }
+
+  .ios-item-active {
+    @apply active:bg-gray-200 dark:active:bg-white/10;
+  }
+
+  .ios-title {
+    @apply text-[17px] font-semibold tracking-tight;
+  }
+
+  .ios-subtitle {
+    @apply text-[13px] text-ios-label-secondary dark:text-ios-label-secondaryDark;
+  }
+}
+
 html, body, #root {
   margin: 0;
   height: 100%;

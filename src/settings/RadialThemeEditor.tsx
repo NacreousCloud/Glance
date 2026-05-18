@@ -19,37 +19,41 @@ function ColorField({
   onOpacity?: (v: number) => void;
 }) {
   return (
-    <div className="space-y-1 text-xs">
-      <div className="flex items-center gap-2">
-        <span className="flex-1 truncate text-gray-700">{label}</span>
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => onColor(e.target.value)}
-          className="h-6 w-8 shrink-0 cursor-pointer border-0 bg-transparent p-0"
-        />
-        <input
-          type="text"
-          value={color}
-          onChange={(e) => onColor(e.target.value)}
-          className="w-20 shrink-0 rounded border px-1 py-0.5 font-mono"
-        />
+    <div className="p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="ios-title">{label}</span>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={color.toUpperCase()}
+            onChange={(e) => onColor(e.target.value)}
+            className="w-20 bg-gray-100 dark:bg-white/10 rounded px-2 py-1 font-mono text-[13px] text-center outline-none"
+          />
+          <div className="relative w-8 h-8 rounded-full border-2 border-white shadow-sm overflow-hidden" style={{ backgroundColor: color }}>
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => onColor(e.target.value)}
+              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+            />
+          </div>
+        </div>
       </div>
-      {onOpacity !== undefined && opacity !== undefined ? (
-        <div className="flex items-center gap-2 pl-2">
+      {onOpacity !== undefined && opacity !== undefined && (
+        <div className="flex items-center gap-3 px-1">
           <input
             type="range"
             min={0}
             max={100}
             value={Math.round(opacity * 100)}
             onChange={(e) => onOpacity(Number(e.target.value) / 100)}
-            className="min-w-0 flex-1"
+            className="flex-1 accent-ios-system-blue h-1.5 bg-gray-200 dark:bg-white/10 rounded-full appearance-none"
           />
-          <span className="w-10 shrink-0 text-right tabular-nums text-gray-500">
+          <span className="w-10 text-right tabular-nums text-[13px] text-ios-label-secondary font-medium">
             {Math.round(opacity * 100)}%
           </span>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -58,18 +62,21 @@ export default function RadialThemeEditor({ value, onChange }: Props) {
   const set = (patch: Partial<RadialTheme>) => onChange({ ...value, ...patch });
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Radial appearance</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-[13px] uppercase tracking-wider text-ios-label-secondary dark:text-ios-label-secondaryDark">
+          Radial Appearance
+        </h2>
         <button
           type="button"
-          className="text-xs text-gray-500 hover:text-blue-600"
+          className="text-[13px] font-medium text-ios-system-blue active:opacity-60"
           onClick={() => onChange(DEFAULT_RADIAL_THEME)}
         >
-          Reset
+          Reset Theme
         </button>
       </div>
-      <div className="space-y-2 rounded border p-3">
+
+      <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
         <ColorField
           label="Backdrop"
           color={value.backdrop_color}
@@ -85,20 +92,19 @@ export default function RadialThemeEditor({ value, onChange }: Props) {
           onOpacity={(v) => set({ sector_opacity: v })}
         />
         <ColorField
-          label="Hover"
+          label="Hover State"
           color={value.hover_color}
           onColor={(v) => set({ hover_color: v })}
         />
         <ColorField
-          label="Center disc"
+          label="Center Circle"
           color={value.center_color}
           onColor={(v) => set({ center_color: v })}
         />
-        <p className="text-xs text-gray-400">
-          Backdrop opacity 0% → square shape disappears (click outside still
-          closes the menu via window blur).
-        </p>
       </div>
-    </section>
+      <p className="px-4 text-[12px] text-ios-label-secondary dark:text-ios-label-secondaryDark italic leading-snug">
+        Tip: Set Backdrop opacity to 0% for a clean circular look.
+      </p>
+    </div>
   );
 }

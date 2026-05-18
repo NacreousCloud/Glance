@@ -319,7 +319,7 @@ impl NotificationSource for MacosNotiSource {
                 }
                 seen_numbers.retain(|n| current.contains(n));
 
-                if tick % 40 == 0 {
+                if tick.is_multiple_of(40) {
                     tracing::debug!(
                         tick,
                         visible = windows.len(),
