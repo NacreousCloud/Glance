@@ -2250,7 +2250,7 @@ Add a "Radial menu" section describing:
 
 ### Step 15.2: Manual QA checklist
 
-Add to `docs/superpowers/checklists/mvp-manual-qa.md`:
+Add to `docs/gemini/checklists/mvp-manual-qa.md`:
 
 ```markdown
 ## Radial menu

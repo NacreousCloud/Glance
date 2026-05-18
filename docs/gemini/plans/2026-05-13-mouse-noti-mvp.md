@@ -1,6 +1,6 @@
 # mouse-noti MVP Implementation Plan (Phase 0 + Phase 1)
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use gemini:subagent-driven-development (recommended) or gemini:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the mouse-noti MVP — a macOS + Windows Tauri app that detects system desktop notifications and displays a configurable visual indicator at the mouse cursor.
 
@@ -8,7 +8,7 @@
 
 **Tech Stack:** Tauri 2.x, Rust (tokio, serde, toml, windows, objc2, core-foundation, core-graphics), React + TypeScript + Tailwind CSS, Vite, pnpm.
 
-**Related spec:** `docs/superpowers/specs/2026-05-13-mouse-noti-design.md`
+**Related spec:** `docs/gemini/specs/2026-05-13-mouse-noti-design.md`
 
 ---
 
@@ -2185,7 +2185,7 @@ git commit -m "feat(settings): permission panel + autostart toggle"
 ### Task 17: Manual integration test checklist + mock-feature CLI
 
 **Files:**
-- Create: `docs/superpowers/checklists/mvp-manual-qa.md`
+- Create: `docs/gemini/checklists/mvp-manual-qa.md`
 - Modify: `src-tauri/src/commands.rs` (add `inject_mock_event` behind `mock-os` feature)
 
 - [ ] **Step 17.1: Add mock injection command**
@@ -2226,7 +2226,7 @@ Replace the `invoke_handler` line with:
 
 - [ ] **Step 17.2: Write QA checklist**
 
-Create `docs/superpowers/checklists/mvp-manual-qa.md`:
+Create `docs/gemini/checklists/mvp-manual-qa.md`:
 ```markdown
 # mouse-noti MVP Manual QA
 
@@ -2277,7 +2277,7 @@ For each of `ring_pulse`, `icon_badge`, `persistent_badge`:
 - [ ] **Step 17.3: Commit**
 
 ```bash
-git add docs/superpowers/checklists src-tauri
+git add docs/gemini/checklists src-tauri
 git commit -m "test: mock event injection + manual QA checklist"
 ```
 
@@ -2399,9 +2399,9 @@ Phase 1 (MVP). Indicator only. Radial menu planned for v2.
 - Windows: Notifications listener (first-run consent prompt)
 
 ## Docs
-- Spec: `docs/superpowers/specs/2026-05-13-mouse-noti-design.md`
-- Plan: `docs/superpowers/plans/2026-05-13-mouse-noti-mvp.md`
-- Manual QA: `docs/superpowers/checklists/mvp-manual-qa.md`
+- Spec: `docs/gemini/specs/2026-05-13-mouse-noti-design.md`
+- Plan: `docs/gemini/plans/2026-05-13-mouse-noti-mvp.md`
+- Manual QA: `docs/gemini/checklists/mvp-manual-qa.md`
 ```
 
 - [ ] **Step 19.2: Tag v0.1.0**

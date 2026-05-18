@@ -375,7 +375,7 @@ The commit message body should describe the user-visible behavior change: indica
 
 **Files:**
 - Modify: `README.md`
-- Modify: `docs/superpowers/checklists/mvp-manual-qa.md`
+- Modify: `docs/gemini/checklists/mvp-manual-qa.md`
 
 - [ ] **Step 3.1: README — adjust permissions section**
 
@@ -389,7 +389,7 @@ Add a short note under "알려진 제약":
 
 - [ ] **Step 3.2: QA checklist — bump expected latency**
 
-In `docs/superpowers/checklists/mvp-manual-qa.md` find the "Indicator" section and add an explicit latency check:
+In `docs/gemini/checklists/mvp-manual-qa.md` find the "Indicator" section and add an explicit latency check:
 ```markdown
 - [ ] Trigger a real OS notification (Slack message, Teams DM, Calendar alert)
 - [ ] Indicator appears at cursor within ~300ms of the banner becoming visible
@@ -400,7 +400,7 @@ In `docs/superpowers/checklists/mvp-manual-qa.md` find the "Indicator" section a
 - [ ] **Step 3.3: Commit**
 
 ```bash
-git add README.md docs/superpowers/checklists/mvp-manual-qa.md
+git add README.md docs/gemini/checklists/mvp-manual-qa.md
 git commit -m "docs: update permissions notes and QA latency expectations after CGWindowList switch"
 ```
 
