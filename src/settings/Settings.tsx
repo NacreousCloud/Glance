@@ -16,8 +16,8 @@ type Tab = 'general' | 'radial' | 'diagnostics' | 'about';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'general', label: 'General' },
-  { id: 'radial', label: 'Radial' },
-  { id: 'diagnostics', label: 'Diag' },
+  { id: 'radial', label: 'Radial Menu' },
+  { id: 'diagnostics', label: 'Diagnostics' },
   { id: 'about', label: 'About' },
 ];
 
@@ -33,7 +33,7 @@ const SettingsGroup = ({ title, children }: SettingsGroupProps) => (
         {title}
       </h2>
     )}
-    <div className="ios-card divide-y divide-ios-separator-light dark:divide-ios-separator-dark">
+    <div className="divide-y ios-card divide-ios-separator-light dark:divide-ios-separator-dark">
       {children}
     </div>
   </div>
@@ -61,7 +61,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-[#F2F2F7] dark:bg-black p-4 space-y-6">
-      <header className="px-2 flex items-center justify-between">
+      <header className="flex items-center justify-between px-2">
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <span className="text-[13px] text-ios-label-secondary dark:text-ios-label-secondaryDark bg-white/50 dark:bg-white/10 px-2 py-0.5 rounded-full">
           v{APP_VERSION}
@@ -170,7 +170,7 @@ export default function Settings() {
         )}
 
         {tab === 'about' && (
-          <div className="ios-card p-0">
+          <div className="p-0 ios-card">
             <About />
           </div>
         )}
