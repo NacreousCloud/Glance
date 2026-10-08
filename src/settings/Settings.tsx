@@ -12,7 +12,7 @@ import { DEFAULT_RADIAL_THEME } from './api';
 import { usePreferences } from './usePreferences';
 import GettingStarted from './GettingStarted';
 
-const APP_VERSION = '0.6.7';
+const APP_VERSION = '0.6.8';
 
 type Tab = 'general' | 'radial' | 'diagnostics' | 'about';
 

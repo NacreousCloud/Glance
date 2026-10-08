@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::path::PathBuf;
+#[cfg(not(target_os = "windows"))]
 use std::process::Command;
 
 pub fn run(path: &str) -> Result<()> {
@@ -15,10 +16,8 @@ pub fn run(path: &str) -> Result<()> {
 
     #[cfg(target_os = "windows")]
     {
-        // `cmd /c start "" <path>` resolves .lnk, .exe, and registered
-        // file associations the same way Explorer does. The empty quoted
-        // argument is the window title that `start` insists on consuming
-        // when the first quoted token is the path.
+        // Resolve executables, shortcuts, and file associations through
+        // the platform opener without shell command interpolation.
         tauri_plugin_opener::open_path(path, None::<&str>)?;
     }
 

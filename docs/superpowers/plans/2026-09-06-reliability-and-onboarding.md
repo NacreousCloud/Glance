@@ -26,6 +26,6 @@ Adding a menu/hotkey then changing appearance preserves both immediately and aft
 
 ## Verification and release
 
-Frontend: 15 passing tests and production Vite build. Rust: 30 passing unit tests, plus mock-os binary/doc test targets. Independent code review found no actionable correctness/security issues. Version metadata aligned to 0.6.7 for release.
+Frontend: 15 passing tests and production Vite build. Rust: 30 passing unit tests, plus mock-os binary/doc test targets. Independent code review found no actionable correctness/security issues. The initial 0.6.7 Windows CI caught an unused platform import under `-D warnings`; the import is now conditional, and version metadata is aligned to 0.6.8 without rewriting the published tag.
 
 Manual OS checks remain: native confirmation visibility/cancellation, Windows app/URL launch, and physical multi-monitor indicator placement. These have not been verified by automated tests. Existing macOS mixed-DPI and notification-history limitations are outside this release's scope.
