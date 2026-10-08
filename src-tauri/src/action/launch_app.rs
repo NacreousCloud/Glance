@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -10,10 +10,7 @@ pub fn run(path: &str) -> Result<()> {
 
     #[cfg(target_os = "macos")]
     {
-        Command::new("open")
-            .arg(&p)
-            .status()
-            .with_context(|| format!("failed to spawn `open` for {}", path))?;
+        super::process::run(Command::new("open").arg(&p))?;
     }
 
     #[cfg(target_os = "windows")]
@@ -22,19 +19,12 @@ pub fn run(path: &str) -> Result<()> {
         // file associations the same way Explorer does. The empty quoted
         // argument is the window title that `start` insists on consuming
         // when the first quoted token is the path.
-        Command::new("cmd")
-            .args(["/c", "start", ""])
-            .arg(&p)
-            .status()
-            .with_context(|| format!("failed to spawn via `cmd /c start` for {}", path))?;
+        tauri_plugin_opener::open_path(path, None::<&str>)?;
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "windows")))]
     {
-        Command::new("xdg-open")
-            .arg(&p)
-            .status()
-            .with_context(|| format!("failed to spawn `xdg-open` for {}", path))?;
+        super::process::run(Command::new("xdg-open").arg(&p))?;
     }
 
     Ok(())

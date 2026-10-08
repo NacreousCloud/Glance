@@ -25,7 +25,6 @@ export default function PermissionPanel() {
 
   const unlocks = isMac
     ? [
-        'Notification detection',
         'Mouse & Trackpad gestures',
       ]
     : ['System notification capture'];
@@ -64,8 +63,9 @@ export default function PermissionPanel() {
             <div>
               <h3 className="ios-title text-ios-system-red">{label} Access Required</h3>
               <p className="text-[13px] text-gray-600 dark:text-gray-400 mt-1 leading-snug">
-                Glance needs this to detect notifications and mouse gestures.
-                Without it, features like {unlocks.join(', ')} will be disabled.
+                {isMac
+                  ? 'Accessibility enables mouse gestures. Banner detection and the test indicator do not require it.'
+                  : `Allow notification access to enable ${unlocks.join(', ')}.`}
               </p>
             </div>
           </div>

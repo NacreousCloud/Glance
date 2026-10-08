@@ -28,6 +28,10 @@ pub struct IndicatorPayload {
     pub color_hue: u16,
 }
 
+fn should_show_indicator(enabled: bool, app_id: &str) -> bool {
+    enabled || matches!(app_id, "dev.error" | "dev.preview")
+}
+
 pub fn spawn<R: Runtime>(
     app: AppHandle<R>,
     bus: EventBus,
@@ -66,7 +70,7 @@ pub fn spawn<R: Runtime>(
             );
             // Master switch. Error events (dev.error) bypass the toggle so
             // failures always reach the user even with the indicator off.
-            if !enabled_provider() && event.app_id != "dev.error" {
+            if !should_show_indicator(enabled_provider(), &event.app_id) {
                 tracing::debug!("indicator disabled; dropping event");
                 continue;
             }
@@ -168,4 +172,15 @@ pub fn spawn<R: Runtime>(
 
 fn ensure_window<R: Runtime>(app: &AppHandle<R>) -> Option<WebviewWindow<R>> {
     app.get_webview_window("overlay")
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn preview_and_errors_bypass_disabled_indicator() {
+        assert!(super::should_show_indicator(false, "dev.preview"));
+        assert!(super::should_show_indicator(false, "dev.error"));
+        assert!(!super::should_show_indicator(false, "com.example.app"));
+        assert!(super::should_show_indicator(true, "com.example.app"));
+    }
 }

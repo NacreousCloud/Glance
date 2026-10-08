@@ -1,7 +1,7 @@
 {
   "name": "glance",
   "private": true,
-  "version": "0.6.6",
+  "version": "0.6.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest",
-    "test:run": "vitest run --passWithNoTests"
+    "test:run": "vitest run"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

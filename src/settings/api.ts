@@ -26,6 +26,7 @@ export type Settings = {
   hotkey_bindings?: HotkeyBinding[];
   radial_close_on_leave: boolean;
   radial_theme: RadialTheme;
+  onboarding_completed?: boolean;
 };
 export type PermissionStatus = {
   accessibility_ok: boolean;
@@ -43,7 +44,10 @@ export type NotiEvent = {
 };
 
 export const getSettings = () => invoke<Settings>('get_settings');
-export const setSettings = (settings: Settings) => invoke<void>('set_settings', { settings });
+export type PreferencesPatch = Partial<Pick<Settings,
+  'indicator_style' | 'indicator_enabled' | 'radial_close_on_leave' | 'radial_theme' | 'onboarding_completed'
+>>;
+export const patchPreferences = (patch: PreferencesPatch) => invoke<void>('patch_preferences', { patch });
 export const permissionStatus = () => invoke<PermissionStatus>('permission_status');
 export const requestPermission = () => invoke<void>('request_permission');
 export const getRecentEvents = () => invoke<NotiEvent[]>('get_recent_events');

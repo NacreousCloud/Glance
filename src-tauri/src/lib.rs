@@ -22,7 +22,7 @@ use commands::{
     clear_errors, delete_hotkey_binding, delete_menu_item, exec_menu_item, extract_app_icon,
     get_recent_errors, get_recent_events, get_settings, hide_radial, list_hotkey_bindings,
     list_menu_items, permission_status, radial_log, reorder_menu_items, request_permission,
-    set_settings, upsert_hotkey_binding, upsert_menu_item,
+    patch_preferences, test_notification, upsert_hotkey_binding, upsert_menu_item,
 };
 
 #[cfg(feature = "mock-os")]
@@ -161,7 +161,8 @@ pub fn run() {
             {
                 tauri::generate_handler![
                     get_settings,
-                    set_settings,
+                    patch_preferences,
+                    test_notification,
                     permission_status,
                     request_permission,
                     inject_mock_event,
@@ -185,7 +186,8 @@ pub fn run() {
             {
                 tauri::generate_handler![
                     get_settings,
-                    set_settings,
+                    patch_preferences,
+                    test_notification,
                     permission_status,
                     request_permission,
                     get_recent_events,
@@ -221,6 +223,10 @@ pub fn run() {
                         let _ = win_clone.hide();
                     }
                 });
+                if !store.load().onboarding_completed {
+                    settings_win.show()?;
+                    settings_win.set_focus()?;
+                }
             }
 
             // Subscribe overlay BEFORE starting the OS source so no early publishes are lost.

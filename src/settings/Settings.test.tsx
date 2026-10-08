@@ -14,14 +14,14 @@ describe('StylePicker', () => {
   it('emits onChange when an option is clicked', () => {
     const onChange = vi.fn();
     render(<StylePicker value="ring_pulse" onChange={onChange} />);
-    fireEvent.click(screen.getByLabelText(/icon badge/i));
+    fireEvent.click(screen.getByRole('button', { name: /badge/i }));
     expect(onChange).toHaveBeenCalledWith('icon_badge');
   });
 
   it('marks current value as checked', () => {
     render(<StylePicker value="persistent_badge" onChange={() => {}} />);
-    const radio = screen.getByLabelText(/persistent badge/i) as HTMLInputElement;
-    expect(radio.checked).toBe(true);
+    expect(screen.getByRole('button', { name: /dot/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /ring/i })).toHaveAttribute('aria-pressed', 'false');
   });
 });
 
@@ -30,7 +30,7 @@ describe('PermissionPanel', () => {
     const { default: PermissionPanel } = await import('./PermissionPanel');
     render(<PermissionPanel />);
     expect(
-      await screen.findByText(/Accessibility permission required/i)
+      await screen.findByText(/Accessibility access required/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /open system settings/i })

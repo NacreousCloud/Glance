@@ -9,7 +9,14 @@
 
 ## 현재 상태
 
-**v0.4.6** — 첫 정식 cross-platform release. DMG (macOS aarch64) + MSI (Windows x64) 자동 빌드.
+**v0.6.7** — 설정 보존, 명령 실행 확인·오류 처리, 첫 실행 안내 개선. DMG (macOS aarch64) + MSI (Windows x64) 자동 빌드.
+
+- 일반 설정은 바뀐 항목만 저장해 메뉴·단축키를 보존합니다. 저장 실패 시 **Retry save**로 재시도할 수 있습니다.
+- 설정은 임시 파일 교체 방식으로 저장합니다. 손상된 설정은 백업으로 복구하고, 복구할 수 없으면 덮어쓰지 않습니다.
+- 셸 명령의 **confirm** 옵션은 네이티브 확인창을 표시합니다. 취소하면 실행하지 않으며, 실패한 종료 코드와 stderr 앞부분은 오류 로그에 기록합니다.
+- 첫 실행(이전 버전에서 업그레이드한 경우 포함)에 **Getting started** 안내가 표시됩니다. **Finish setup**으로 완료하면 이후 자동으로 열리지 않습니다.
+- **General → Test notification**은 OS 알림 권한 없이, 알림 표시를 꺼 둔 상태에서도 인디케이터를 시험합니다.
+- **General → Preview menu**는 설정창 안에서 메뉴 외관만 표시하며 앱·URL·명령을 실행하지 않습니다.
 
 - 알림 인디케이터 3종 (Ring Pulse / Icon Badge / Persistent Badge)
 - 라디얼 퀵메뉴 (커서 중심 부채꼴, 키보드 + 마우스 단축키 호출)
@@ -304,8 +311,8 @@ Settings → **Radial appearance** 섹션:
 ## 테스트
 
 ```bash
-pnpm test:run                                          # 프론트엔드 (Vitest, 10 tests)
-cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛 (22 tests)
+pnpm test:run                                          # 프론트엔드 (Vitest)
+cargo test --manifest-path src-tauri/Cargo.toml --lib  # Rust 유닛
 ```
 
 매뉴얼 QA 체크리스트: `docs/gemini/checklists/mvp-manual-qa.md`

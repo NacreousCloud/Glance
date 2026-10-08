@@ -15,6 +15,7 @@ export default function StylePicker({ value, onChange }: Props) {
         <button
           key={o.value}
           type="button"
+          aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-ios border-2 transition-all ${
             value === o.value

@@ -41,7 +41,7 @@ impl EventBus {
         {
             let mut last = self.last_per_app.lock();
             // Bypass debounce for debug notifications
-            if event.app_id != "dev.debug" {
+            if !matches!(event.app_id.as_str(), "dev.debug" | "dev.preview") {
                 if let Some(prev) = last.get(&key) {
                     if now.duration_since(*prev) < DEBOUNCE {
                         tracing::debug!(
